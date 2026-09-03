@@ -24,7 +24,7 @@ const ProductDetailPage = () => {
   const totalPrice = itemTotal + packageTotal
 
   const handleAddToCart = () => {
-    addToCart(product, quantity)
+    addToCart(product, quantity, brandPackage)
     navigate('/')
   }
 

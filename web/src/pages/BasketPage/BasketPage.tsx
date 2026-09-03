@@ -3,10 +3,10 @@ import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
-import { Trash2, ChevronLeft, Users, X } from 'lucide-react'
+import { Trash2, ChevronLeft, Users, X, Package } from 'lucide-react'
 
 const BasketPage = () => {
-  const { cart, removeFromCart, updateQuantity, totalPrice, addToCart } = useCart()
+  const { cart, removeFromCart, updateQuantity, toggleBrandPackage, totalPrice, addToCart } = useCart()
 
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
   const [groupCodeInput, setGroupCodeInput] = useState('')
@@ -73,23 +73,40 @@ const BasketPage = () => {
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-                <img src={item.image} alt={item.name} className="h-16 w-16 rounded-xl object-cover" />
-                <div className="flex-1">
-                  <h3 className="text-sm font-bold">#{item.id} {item.name}</h3>
-                  <p className="text-xs text-[#6F6B76]">Qty {item.quantity}</p>
-                  <p className="mt-1 text-sm font-bold text-[#3E2679]">₦{(item.price * item.quantity).toLocaleString()}</p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => updateQuantity(item.id, -1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">−</button>
-                    <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">+</button>
+              <div key={item.id} className="rounded-2xl bg-white p-4 shadow-sm">
+                <div className="flex items-center gap-4">
+                  <img src={item.image} alt={item.name} className="h-16 w-16 rounded-xl object-cover" />
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold">#{item.id} {item.name}</h3>
+                    <p className="text-xs text-[#6F6B76]">Qty {item.quantity}</p>
+                    <p className="mt-1 text-sm font-bold text-[#3E2679]">₦{(item.price * item.quantity).toLocaleString()}</p>
                   </div>
-                  <button onClick={() => removeFromCart(item.id)} className="rounded-md p-1 text-[#A09BA8] transition hover:text-red-500">
-                    <Trash2 className="h-4 w-4" />
-                  </button>
+                  <div className="flex flex-col items-end gap-2">
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => updateQuantity(item.id, -1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">−</button>
+                      <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
+                      <button onClick={() => updateQuantity(item.id, 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">+</button>
+                    </div>
+                    <button onClick={() => removeFromCart(item.id)} className="rounded-md p-1 text-[#A09BA8] transition hover:text-red-500">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
+                {/* Brand Package Toggle */}
+                <button
+                  onClick={() => toggleBrandPackage(item.id)}
+                  className={`mt-3 flex w-full items-center gap-2 rounded-xl border p-2 text-xs font-bold transition ${
+                    item.brandPackage
+                      ? 'border-[#3E2679] bg-[#3E2679] text-white'
+                      : 'border-[#E9E5EE] bg-[#FAF8FD] text-[#6F6B76]'
+                  }`}
+                >
+                  <Package className="h-4 w-4" />
+                  <span className="flex-1 text-left">Lylon Bag (+₦100)</span>
+                  <span className={item.brandPackage ? 'text-white' : 'text-[#3E2679]'}>
+                    {item.brandPackage ? 'Added' : 'Add'}
+                  </span>
+                </button>
               </div>
             ))
           )}
@@ -120,6 +137,12 @@ const BasketPage = () => {
         {/* Totals Card */}
         {cart.length > 0 && (
           <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5 shadow-sm">
+            {cart.some((item) => item.brandPackage) && (
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-[#6F6B76]">Lylon Bag Fee</span>
+                <span className="font-bold">₦{cart.filter((i) => i.brandPackage).length * 100}</span>
+              </div>
+            )}
             <div className="flex justify-between text-sm mb-2">
               <span className="text-[#6F6B76]">Basket Subtotal</span>
               <span className="font-bold">₦{totalPrice.toLocaleString()}</span>

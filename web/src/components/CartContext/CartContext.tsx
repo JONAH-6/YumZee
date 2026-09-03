@@ -7,13 +7,15 @@ export interface CartItem {
   image: string
   category: string
   quantity: number
+  brandPackage: boolean
 }
 
 interface CartContextType {
   cart: CartItem[]
-  addToCart: (product: { id: number; name: string; price: number; image?: string; category?: string }, quantity?: number) => void
+  addToCart: (product: { id: number; name: string; price: number; image?: string; category?: string }, quantity?: number, brandPackage?: boolean) => void
   removeFromCart: (id: number) => void
   updateQuantity: (id: number, delta: number) => void
+  toggleBrandPackage: (id: number) => void
   clearCart: () => void
   totalPrice: number
   itemCount: number
@@ -32,12 +34,12 @@ export const useCart = () => {
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([])
 
-  const addToCart = (product, quantity = 1) => {
+  const addToCart = (product, quantity = 1, brandPackage = false) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id)
       if (existing) {
         return prev.map((item) =>
-          item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
+          item.id === product.id ? { ...item, quantity: item.quantity + quantity, brandPackage: item.brandPackage || brandPackage } : item
         )
       } else {
         return [
@@ -49,6 +51,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
             image: product.image || '/placeholder.jpg',
             category: product.category || 'Snack',
             quantity: Math.max(1, quantity),
+            brandPackage,
           },
         ]
       }
@@ -71,11 +74,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart([])
   }
 
-  const totalPrice = cart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+  const toggleBrandPackage = (id: number) => {
+    setCart((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, brandPackage: !item.brandPackage } : item
+      )
+    )
+  }
+
+  const totalPrice = cart.reduce((sum, item) => {
+    const itemTotal = item.price * item.quantity
+    const packageTotal = item.brandPackage ? 100 : 0
+    return sum + itemTotal + packageTotal
+  }, 0)
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalPrice, itemCount }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, toggleBrandPackage, clearCart, totalPrice, itemCount }}>
       {children}
     </CartContext.Provider>
   )
