@@ -14,19 +14,12 @@ const ProductDetailPage = () => {
   const product = INITIAL_PRODUCTS.find((p) => p.id === Number(id))
 
   const [quantity, setQuantity] = useState(1)
-  const [extras, setExtras] = useState<{ sauce: boolean; cheese: boolean }>({
-    sauce: true,
-    cheese: false,
-  })
+  const [brandPackage, setBrandPackage] = useState(false)
 
   if (!product) return null
 
-  const saucePrice = 200
-  const cheesePrice = 200
-  const subtotal =
-    product.price +
-    (extras.sauce ? saucePrice : 0) +
-    (extras.cheese ? cheesePrice : 0)
+  const packagePrice = 100
+  const subtotal = product.price + (brandPackage ? packagePrice : 0)
   const totalPrice = subtotal * quantity
 
   const handleAddToCart = () => {
@@ -87,73 +80,42 @@ const ProductDetailPage = () => {
             Customize Your {product.name.split(' (')[0]}
           </h2>
           <p className="mt-1 text-xs font-bold uppercase tracking-widest text-[#6F6B76]">
-            SELECT EXTRAS
+            PACKAGING
           </p>
 
-          <div className="mt-4 space-y-3">
-            {/* Extra Sauce Box */}
+          <div className="mt-4">
+            {/* Brand Package Option */}
             <button
-              onClick={() =>
-                setExtras((prev) => ({ ...prev, sauce: !prev.sauce }))
-              }
+              onClick={() => setBrandPackage(!brandPackage)}
               className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${
-                extras.sauce
+                brandPackage
                   ? 'border-[#3E2679] bg-[#3E2679]'
                   : 'border-[#E9E5EE] bg-white'
               }`}
             >
               <div
                 className={`flex h-6 w-6 items-center justify-center rounded ${
-                  extras.sauce
+                  brandPackage
                     ? 'bg-[#3E2679]'
                     : 'border border-gray-300 bg-white'
                 }`}
               >
-                {extras.sauce && <Check className="h-4 w-4 text-white" />}
+                {brandPackage && <Check className="h-4 w-4 text-white" />}
               </div>
               <span
-                className={`flex-1 text-sm font-medium ${extras.sauce ? 'text-white' : 'text-[#211F26]'}`}
+                className={`flex-1 text-sm font-medium ${brandPackage ? 'text-white' : 'text-[#211F26]'}`}
               >
-                Extra Sauce
+                Pack in Branded Lylon Bag
               </span>
               <span
-                className={`text-sm font-bold ${extras.sauce ? 'text-white' : 'text-[#3E2679]'}`}
+                className={`text-sm font-bold ${brandPackage ? 'text-white' : 'text-[#3E2679]'}`}
               >
-                +₦{saucePrice.toLocaleString()}
+                +₦{packagePrice.toLocaleString()}
               </span>
             </button>
-
-            {/* Extra Cheese Box */}
-            <button
-              onClick={() =>
-                setExtras((prev) => ({ ...prev, cheese: !prev.cheese }))
-              }
-              className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${
-                extras.cheese
-                  ? 'border-[#3E2679] bg-[#3E2679]'
-                  : 'border-[#E9E5EE] bg-white'
-              }`}
-            >
-              <div
-                className={`flex h-6 w-6 items-center justify-center rounded ${
-                  extras.cheese
-                    ? 'bg-[#3E2679]'
-                    : 'border border-gray-300 bg-white'
-                }`}
-              >
-                {extras.cheese && <Check className="h-4 w-4 text-white" />}
-              </div>
-              <span
-                className={`flex-1 text-sm font-medium ${extras.cheese ? 'text-white' : 'text-[#211F26]'}`}
-              >
-                Extra Cheese
-              </span>
-              <span
-                className={`text-sm font-bold ${extras.cheese ? 'text-white' : 'text-[#3E2679]'}`}
-              >
-                +₦{cheesePrice.toLocaleString()}
-              </span>
-            </button>
+            <p className="mt-2 text-xs text-[#6F6B76]">
+              Your order will be packed in a branded nylon bag — market style!
+            </p>
           </div>
         </div>
       </div>
