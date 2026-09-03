@@ -50,7 +50,7 @@ const ProductDetailPage = () => {
         />
         <div className="absolute inset-0 bg-black/30" />
         <button
-          onClick={() => navigate(-1)}
+          onClick={() => navigate('/')}
           className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white"
           aria-label="Back"
         >
