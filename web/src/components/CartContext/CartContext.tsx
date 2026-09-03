@@ -1,33 +1,22 @@
-// web/src/components/CartContext/CartContext.tsx
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { Product, INITIAL_PRODUCTS, OrderStore } from 'src/lib/orderStore'
+import React, { createContext, useContext, useState, ReactNode } from 'react'
 
 export interface CartItem {
   id: number
   name: string
-  category: string
-  description?: string
   price: number
-  originalPrice?: number
   image: string
+  category: string
   quantity: number
-  hiddenAlphabet?: string
 }
 
 interface CartContextType {
   cart: CartItem[]
-  addToCart: (product: { id: number; name: string; price: number; image?: string; category?: string; description?: string }, quantity?: number) => void
+  addToCart: (product: { id: number; name: string; price: number; image?: string; category?: string }, quantity?: number) => void
   removeFromCart: (id: number) => void
-  updateQuantity: (id: number, quantity: number) => void
+  updateQuantity: (id: number, delta: number) => void
   clearCart: () => void
   totalPrice: number
   itemCount: number
-  deliveryType: 'delivery' | 'pickup'
-  setDeliveryType: (type: 'delivery' | 'pickup') => void
-  selectedHostel: string
-  setSelectedHostel: (hostel: string) => void
-  activeGroupCode: string | null
-  setActiveGroupCode: (code: string | null) => void
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined)
@@ -40,35 +29,10 @@ export const useCart = () => {
   return context
 }
 
-const CART_STORAGE_KEY = 'yumzee_student_cart'
-
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>(() => {
-    if (typeof window === 'undefined') return []
-    try {
-      const saved = localStorage.getItem(CART_STORAGE_KEY)
-      return saved ? JSON.parse(saved) : []
-    } catch {
-      return []
-    }
-  })
+  const [cart, setCart] = useState<CartItem[]>([])
 
-  const [deliveryType, setDeliveryType] = useState<'delivery' | 'pickup'>('delivery')
-  const [selectedHostel, setSelectedHostel] = useState<string>('Moremi Hall — Main Gate')
-  const [activeGroupCode, setActiveGroupCode] = useState<string | null>(null)
-
-  useEffect(() => {
-    try {
-      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart))
-    } catch (e) {
-      console.error('Failed to persist cart to localStorage', e)
-    }
-  }, [cart])
-
-  const addToCart = (
-    product: { id: number; name: string; price: number; image?: string; category?: string; description?: string; hiddenAlphabet?: string },
-    quantity = 1
-  ) => {
+  const addToCart = (product, quantity = 1) => {
     setCart((prev) => {
       const existing = prev.find((item) => item.id === product.id)
       if (existing) {
@@ -76,19 +40,15 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           item.id === product.id ? { ...item, quantity: item.quantity + quantity } : item
         )
       } else {
-        const fullProd = INITIAL_PRODUCTS.find((p) => p.id === product.id)
         return [
           ...prev,
           {
             id: product.id,
             name: product.name,
-            category: product.category || fullProd?.category || 'Snack',
-            description: product.description || fullProd?.description || '',
             price: product.price,
-            originalPrice: fullProd?.originalPrice,
-            image: product.image || fullProd?.image || 'https://images.unsplash.com/photo-1544025162-d76694265947?w=500&h=400&fit=crop',
+            image: product.image || '/placeholder.jpg',
+            category: product.category || 'Snack',
             quantity: Math.max(1, quantity),
-            hiddenAlphabet: (product as any).hiddenAlphabet || fullProd?.hiddenAlphabet || String.fromCharCode(65 + (product.id % 26)),
           },
         ]
       }
@@ -99,13 +59,11 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setCart((prev) => prev.filter((item) => item.id !== id))
   }
 
-  const updateQuantity = (id: number, quantity: number) => {
-    if (quantity <= 0) {
-      removeFromCart(id)
-      return
-    }
+  const updateQuantity = (id: number, delta: number) => {
     setCart((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, quantity } : item))
+      prev.map((item) =>
+        item.id === id ? { ...item, quantity: Math.max(1, item.quantity + delta) } : item
+      )
     )
   }
 
@@ -117,23 +75,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   const itemCount = cart.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
-    <CartContext.Provider
-      value={{
-        cart,
-        addToCart,
-        removeFromCart,
-        updateQuantity,
-        clearCart,
-        totalPrice,
-        itemCount,
-        deliveryType,
-        setDeliveryType,
-        selectedHostel,
-        setSelectedHostel,
-        activeGroupCode,
-        setActiveGroupCode,
-      }}
-    >
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, totalPrice, itemCount }}>
       {children}
     </CartContext.Provider>
   )

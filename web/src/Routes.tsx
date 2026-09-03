@@ -1,56 +1,33 @@
-// web/src/Routes.tsx
 import { Router, Route, Set } from '@redwoodjs/router'
-import { useAuth } from './contexts/AuthContexts'
-import MainLayout from './layouts/MainLayout/MainLayout'
+import { useAuth } from 'src/contexts/AuthContexts'
 
-import HomePage from './pages/HomePage/HomePage'
-import CheckoutPage from './pages/CheckoutPage/CheckoutPage'
-import CreateGroupOrderPage from './pages/CreateGroupOrderPage/CreateGroupOrderPage'
-import GroupOrderRoomPage from './pages/GroupOrderRoomPage/GroupOrderRoomPage'
-import TrackOrderPage from './pages/TrackOrderPage/TrackOrderPage'
-import SellerPortalPage from './pages/SellerPortalPage/SellerPortalPage'
-import RiderPortalPage from './pages/RiderPortalPage/RiderPortalPage'
-import AdminPortalPage from './pages/AdminPortalPage/AdminPortalPage'
-import OrdersPage from './pages/OrdersPage/OrdersPage'
-import DashboardPage from './pages/DashboardPage/DashboardPage'
-import FavoritesPage from './pages/FavoritesPage/FavoritesPage'
-import ProfilePage from './pages/ProfilePage/ProfilePage'
-import SettingsPage from './pages/SettingsPage/SettingsPage'
-import ContactPage from './pages/ContactPage/ContactPage'
-import AboutPage from './pages/AboutPage/AboutPage'
-import DiscoverPage from './pages/DiscoverPage/DiscoverPage'
-import LoginPage from './pages/LoginPage/LoginPage'
-import NotFoundPage from './pages/NotFoundPage/NotFoundPage'
+import MainLayout from 'src/layouts/MainLayout/MainLayout'
+import WelcomePage from 'src/pages/WelcomePage/WelcomePage'
+import HomePage from 'src/pages/HomePage/HomePage'
+import SearchPage from 'src/pages/SearchPage/SearchPage'
+import ProductDetailPage from 'src/pages/ProductDetailPage/ProductDetailPage'
+import BasketPage from 'src/pages/BasketPage/BasketPage'
+import OrdersPage from 'src/pages/OrdersPage/OrdersPage'
+import ProfilePage from 'src/pages/ProfilePage/ProfilePage'
+import NotFoundPage from 'src/pages/NotFoundPage/NotFoundPage'
 
 const Routes = () => {
+  const { isAuthenticated } = useAuth()
+
   return (
-    <Router useAuth={useAuth}>
-      <Set wrap={MainLayout}>
-        {/* Core Student Ordering Routes */}
-        <Route path="/" page={HomePage} name="home" />
-        <Route path="/checkout" page={CheckoutPage} name="checkout" />
-        <Route path="/group/create" page={CreateGroupOrderPage} name="createGroupOrder" />
-        <Route path="/group/{code}" page={GroupOrderRoomPage} name="groupOrderRoom" />
-        <Route path="/track/{orderId}" page={TrackOrderPage} name="trackOrder" />
-        <Route path="/orders" page={OrdersPage} name="orders" />
-
-        {/* Multi-Role Operations Portals */}
-        <Route path="/seller" page={SellerPortalPage} name="sellerPortal" />
-        <Route path="/rider" page={RiderPortalPage} name="riderPortal" />
-        <Route path="/admin" page={AdminPortalPage} name="adminPortal" />
-
-        {/* Dashboard & Profile */}
-        <Route path="/dashboard" page={DashboardPage} name="dashboard" />
-        <Route path="/favorites" page={FavoritesPage} name="favorites" />
-        <Route path="/profile" page={ProfilePage} name="profile" />
-        <Route path="/settings" page={SettingsPage} name="settings" />
-        <Route path="/contact" page={ContactPage} name="contact" />
-        <Route path="/about" page={AboutPage} name="about" />
-        <Route path="/discover" page={DiscoverPage} name="discover" />
-      </Set>
-
-      {/* Auth & Error Routes */}
-      <Route path="/login" page={LoginPage} name="login" />
+    <Router>
+      {isAuthenticated ? (
+        <Set wrap={MainLayout}>
+          <Route path="/" page={HomePage} name="home" />
+          <Route path="/search" page={SearchPage} name="search" />
+          <Route path="/product/{id:Int}" page={ProductDetailPage} name="productDetail" />
+          <Route path="/basket" page={BasketPage} name="basket" />
+          <Route path="/orders" page={OrdersPage} name="orders" />
+          <Route path="/profile" page={ProfilePage} name="profile" />
+        </Set>
+      ) : (
+        <Route path="/" page={WelcomePage} name="welcome" />
+      )}
       <Route notfound page={NotFoundPage} />
     </Router>
   )

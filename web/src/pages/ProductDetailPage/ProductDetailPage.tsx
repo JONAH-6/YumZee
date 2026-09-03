@@ -1,0 +1,205 @@
+import React, { useState } from 'react'
+
+import { ArrowLeft, Check } from 'lucide-react'
+
+import { useParams, navigate } from '@redwoodjs/router'
+import { Metadata } from '@redwoodjs/web'
+
+import { useCart } from 'src/components/CartContext/CartContext'
+import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
+
+const ProductDetailPage = () => {
+  const { id } = useParams()
+  const { addToCart } = useCart()
+  const product = INITIAL_PRODUCTS.find((p) => p.id === Number(id))
+
+  const [quantity, setQuantity] = useState(1)
+  const [extras, setExtras] = useState<{ sauce: boolean; cheese: boolean }>({
+    sauce: true,
+    cheese: false,
+  })
+
+  if (!product) return null
+
+  const saucePrice = 200
+  const cheesePrice = 200
+  const subtotal =
+    product.price +
+    (extras.sauce ? saucePrice : 0) +
+    (extras.cheese ? cheesePrice : 0)
+  const totalPrice = subtotal * quantity
+
+  const handleAddToCart = () => {
+    addToCart(product, quantity)
+    navigate('/')
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FFF9E5]">
+      <Metadata
+        title={`Yumzee — ${product.name}`}
+        description={`Product detail for ${product.name}`}
+      />
+
+      {/* Top Image */}
+      <div className="relative">
+        <img
+          src={product.image}
+          alt={product.name}
+          className="h-64 w-full object-cover"
+        />
+        <div className="absolute inset-0 bg-black/30" />
+        <button
+          onClick={() => navigate(-1)}
+          className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white"
+          aria-label="Back"
+        >
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+      </div>
+
+      {/* White Background Content */}
+      <div className="bg-white">
+        <div className="mx-auto max-w-md px-4 py-4">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold text-[#211F26]">
+              {product.name}
+            </h1>
+            <span className="text-xl font-bold text-[#3E2679]">
+              ₦{product.price.toLocaleString()}
+            </span>
+          </div>
+
+          {/* Description */}
+          <p className="mt-3 text-sm leading-relaxed text-[#6F6B76]">
+            Double sausage, seasoned shredded chicken, cabbage and rich
+            signature mayonnaise garlic sauce rolled inside a masterfully
+            grilled Lebanese flatbread wrap.
+          </p>
+        </div>
+      </div>
+
+      {/* Customize Section (Cream Background #FFF9E5) */}
+      <div className="bg-[#FFF9E5]">
+        <div className="mx-auto max-w-md px-4 py-6">
+          <h2 className="text-lg font-bold text-[#211F26]">
+            Customize Your {product.name.split(' (')[0]}
+          </h2>
+          <p className="mt-1 text-xs font-bold uppercase tracking-widest text-[#6F6B76]">
+            SELECT EXTRAS
+          </p>
+
+          <div className="mt-4 space-y-3">
+            {/* Extra Sauce Box */}
+            <button
+              onClick={() =>
+                setExtras((prev) => ({ ...prev, sauce: !prev.sauce }))
+              }
+              className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${
+                extras.sauce
+                  ? 'border-[#3E2679] bg-[#3E2679]'
+                  : 'border-[#E9E5EE] bg-white'
+              }`}
+            >
+              <div
+                className={`flex h-6 w-6 items-center justify-center rounded ${
+                  extras.sauce
+                    ? 'bg-[#3E2679]'
+                    : 'border border-gray-300 bg-white'
+                }`}
+              >
+                {extras.sauce && <Check className="h-4 w-4 text-white" />}
+              </div>
+              <span
+                className={`flex-1 text-sm font-medium ${extras.sauce ? 'text-white' : 'text-[#211F26]'}`}
+              >
+                Extra Sauce
+              </span>
+              <span
+                className={`text-sm font-bold ${extras.sauce ? 'text-white' : 'text-[#3E2679]'}`}
+              >
+                +₦{saucePrice.toLocaleString()}
+              </span>
+            </button>
+
+            {/* Extra Cheese Box */}
+            <button
+              onClick={() =>
+                setExtras((prev) => ({ ...prev, cheese: !prev.cheese }))
+              }
+              className={`flex w-full items-center gap-3 rounded-xl border p-3 text-left ${
+                extras.cheese
+                  ? 'border-[#3E2679] bg-[#3E2679]'
+                  : 'border-[#E9E5EE] bg-white'
+              }`}
+            >
+              <div
+                className={`flex h-6 w-6 items-center justify-center rounded ${
+                  extras.cheese
+                    ? 'bg-[#3E2679]'
+                    : 'border border-gray-300 bg-white'
+                }`}
+              >
+                {extras.cheese && <Check className="h-4 w-4 text-white" />}
+              </div>
+              <span
+                className={`flex-1 text-sm font-medium ${extras.cheese ? 'text-white' : 'text-[#211F26]'}`}
+              >
+                Extra Cheese
+              </span>
+              <span
+                className={`text-sm font-bold ${extras.cheese ? 'text-white' : 'text-[#3E2679]'}`}
+              >
+                +₦{cheesePrice.toLocaleString()}
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Quantity Section (White Background) */}
+      <div className="bg-white">
+        <div className="mx-auto max-w-md px-4 py-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-bold text-[#211F26]">Quantity</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FFF3D6] text-[#211F26]"
+              >
+                −
+              </button>
+              <span className="w-8 text-center text-base font-bold text-[#211F26]">
+                {quantity}
+              </span>
+              <button
+                onClick={() => setQuantity((prev) => prev + 1)}
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[#FFC107] text-[#211F26]"
+              >
+                +
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Spacer */}
+      <div className="h-24" />
+
+      {/* Sticky Bottom Action Button */}
+      <div className="sticky bottom-0 left-0 right-0 bg-[#FFF9E5] py-4">
+        <div className="mx-auto max-w-md px-4">
+          <button
+            onClick={handleAddToCart}
+            className="w-full rounded-[9999px] bg-[#FFC107] py-4 text-lg font-bold text-[#211F26] shadow-lg"
+          >
+            Add to Cart — ₦{totalPrice.toLocaleString()}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default ProductDetailPage

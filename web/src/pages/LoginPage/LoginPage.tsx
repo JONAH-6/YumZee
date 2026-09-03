@@ -41,7 +41,7 @@ const LoginPage = () => {
   // Redirect if already authenticated
   useEffect(() => {
     if (!loading && isAuthenticated) {
-      navigate(routes.dashboard(), { replace: true })
+      navigate(routes.home(), { replace: true })
     }
   }, [isAuthenticated, loading])
 
@@ -51,7 +51,7 @@ const LoginPage = () => {
       setErrorMessage(null)
       const signedInUser = await googleSignIn()
       if (signedInUser) {
-        navigate(routes.dashboard(), { replace: true })
+        navigate(routes.home(), { replace: true })
       }
     } catch (error: unknown) {
       console.error('Google sign-in error:', error)

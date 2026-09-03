@@ -46,7 +46,7 @@ const CheckoutPage = () => {
   const [joinError, setJoinError] = useState('')
   const [copied, setCopied] = useState(false)
   const [activeGroup, setActiveGroup] = useState<GroupOrder | null>(null)
-  const [productPreview, setProductPreview] = useState<{ product: any; qty: number }[] | null>(null)
+
 
   const getGuestId = () => {
     if (typeof window === 'undefined') return 'guest'
@@ -99,21 +99,23 @@ const CheckoutPage = () => {
   const handleJoin = async () => {
     const raw = joinCodeInput.trim()
     if (!raw) { setJoinError('Enter code'); return }
-    // Product number(s) → auto-load (e.g., 5, 5x3, 3x2,7x1,12x3) — product identifier + quantity, not quantity selector alone
+    // Product number(s) → add directly to cart (e.g., 1,5,12 or 1x2,5x1,12x3)
     const parsedList = parseProductSelectionCode(raw)
     if (parsedList) {
-      const found: { product: any; qty: number }[] = []
+      const addedNames: string[] = []
       for (const p of parsedList) {
         const prod = INITIAL_PRODUCTS.find(x => x.id === p.productId)
-        if (!prod) { setJoinError(`No product #${p.productId} — we have 1-20`); setProductPreview(null); return }
-        found.push({ product: prod, qty: p.quantity })
+        if (!prod) { setJoinError(`No product #${p.productId} — we have 1-15`); return }
+        addToCart(prod, p.quantity)
+        addedNames.push(`${prod.name} ×${p.quantity}`)
       }
-      // Do not create duplicate entries — quantity already handled via parse (e.g., 5x3 is qty 3, not 3 entries)
-      setProductPreview(found)
-      setJoinError('')
+      setJoinCodeInput('')
+      setGroupModalOpen(false)
+      setModalView('choice')
+      setJoinError(`Added: ${addedNames.join(', ')}`)
+      setTimeout(() => setJoinError(''), 3000)
       return
     }
-    setProductPreview(null)
     const code = raw.toUpperCase()
     try {
       let g: GroupOrder | null = null
@@ -122,7 +124,6 @@ const CheckoutPage = () => {
       }
       setActiveGroup(g!)
       setJoinError('')
-      setProductPreview(null)
       setGroupModalOpen(false)
       setModalView('choice')
     } catch (e: any) {
@@ -201,11 +202,11 @@ const CheckoutPage = () => {
             <div className="p-6 space-y-4">
               {modalView === 'choice' && (
                 <>
-                  <button onClick={handleInvite} className="w-full rounded-2xl border-2 border-[#4B2E83] bg-white p-4 text-left hover:bg-[#F5F1FB] transition">
+                  <button onClick={() => setModalView('join')} className="w-full rounded-2xl border-2 border-[#4B2E83] bg-white p-4 text-left hover:bg-[#F5F1FB] transition">
                     <div className="font-black text-sm text-[#4B2E83]">JOIN</div>
                     <div className="text-xs text-[#6F6B76]">Join a friend&apos;s group order</div>
                   </button>
-                  <button onClick={() => setModalView('join')} className="w-full rounded-2xl bg-[#4B2E83] p-4 text-left text-white hover:bg-[#371F62] transition">
+                  <button onClick={handleInvite} className="w-full rounded-2xl bg-[#4B2E83] p-4 text-left text-white hover:bg-[#371F62] transition">
                     <div className="font-black text-sm">INVITE</div>
                     <div className="text-xs text-white/80">Invite friends to your group order</div>
                   </button>
@@ -215,43 +216,17 @@ const CheckoutPage = () => {
 
               {modalView === 'join' && (
                 <div className="space-y-3">
-                  <h4 className="font-bold text-sm text-center">Enter Group Code or Product Number</h4>
-                  <p className="text-xs text-center text-[#6F6B76]">Group: <span className="font-mono font-bold">YZ-XXXX-XXXX</span> • Product: <span className="font-mono font-bold">5</span> or <span className="font-mono font-bold">5x2</span> (qty)</p>
-                  <input value={joinCodeInput} onChange={(e) => { setJoinCodeInput(e.target.value.toUpperCase()); setJoinError(''); setProductPreview(null) }} placeholder="YZ-XXXX-XXXX or 5 or 12x3" className="w-full rounded-xl border border-[#E9E5EE] bg-[#FAF8FD] px-3 py-3 text-sm font-mono font-bold tracking-widest text-center focus:border-[#4B2E83] focus:outline-none" />
-                  {joinError && <p className="text-xs font-bold text-red-600 text-center whitespace-pre-wrap">{joinError}</p>}
-                  {productPreview && (
-                    <div className="space-y-2">
-                      {productPreview.map(({ product, qty }) => (
-                        <div key={product.id} className="rounded-xl border border-[#4B2E83]/20 bg-[#F5F1FB] p-3 flex items-center gap-3">
-                          <img src={product.image} alt={product.name} className="h-12 w-12 rounded-xl object-cover border" />
-                          <div className="flex-1 min-w-0">
-                            <div className="text-xs font-bold text-[#4B2E83]">{product.category}</div>
-                            <div className="text-sm font-bold truncate">{product.name}</div>
-                            <div className="text-xs text-[#6F6B76]">Qty {qty} → ₦{(product.price * qty).toLocaleString()}</div>
-                          </div>
-                          <span className="text-xs font-bold">×{qty}</span>
-                        </div>
-                      ))}
-                      <button
-                        onClick={() => {
-                          productPreview.forEach(({ product, qty }) => addToCart(product, qty))
-                          const code = productPreview.map(p => p.qty > 1 ? `${p.product.id}x${p.qty}` : `${p.product.id}`).join(',')
-                          setProductPreview(null)
-                          setJoinError(`Loaded ${productPreview.length} product(s) — added to bag`)
-                          setJoinCodeInput('')
-                        }}
-                        className="w-full rounded-xl bg-[#FFC928] py-2.5 text-xs font-bold text-[#4B2E83]"
-                      >
-                        Add All to Bag
-                      </button>
-                    </div>
-                  )}
+                  <h4 className="font-bold text-sm text-center">Enter Product Code</h4>
+                  <p className="text-xs text-center text-[#6F6B76]">Format: <span className="font-mono font-bold">1,5,12</span> or <span className="font-mono font-bold">1x2,5x1,12x3</span></p>
+                  <input value={joinCodeInput} onChange={(e) => { setJoinCodeInput(e.target.value.toUpperCase()); setJoinError('') }} placeholder="1,5,12 or 1x2,5x1,12x3" className="w-full rounded-xl border border-[#E9E5EE] bg-[#FAF8FD] px-3 py-3 text-sm font-mono font-bold tracking-widest text-center focus:border-[#4B2E83] focus:outline-none" />
+                  {joinError && <p className="text-xs font-bold text-[#4B2E83] text-center whitespace-pre-wrap">{joinError}</p>}
                   <div className="rounded-xl bg-[#F5F1FB] p-3 text-xs text-[#6F6B76]">
-                    <div className="font-bold text-[#211F26]">Active group codes on this device:</div>
-                    <div className="font-mono mt-1">{GroupOrderStore.getAll().filter(g=>g.status==='active').map(g=>g.code).join(', ') || 'None — click INVITE to create one.'}</div>
-                    <div className="text-[11px] mt-1">Tip: Product number identifies item (1=Jollof), quantity selector is separate. Enter <b>5</b> → loads Product 5, <b>12×3</b> → Product 12 qty 3. Group code is YZ-...</div>
+                    <div className="font-bold text-[#211F26]">Product IDs (1-15):</div>
+                    <div className="font-mono mt-1">1=Shawarma  2=Plantain  3=Puff Puff  4=Chapman  5=Moi Moi</div>
+                    <div className="font-mono">6=Zobo  7=Akara  8=Suya  9=Meat Pie  10=Sausage Roll</div>
+                    <div className="font-mono">11=Sandwich  12=Cake  13=Cupcake  14=Fruit Cup  15=Yogurt</div>
                   </div>
-                  <button onClick={handleJoin} className="w-full rounded-xl bg-[#4B2E83] py-3 text-sm font-bold text-white">JOIN GROUP / LOAD PRODUCT</button>
+                  <button onClick={handleJoin} className="w-full rounded-xl bg-[#4B2E83] py-3 text-sm font-bold text-white">ADD TO BAG</button>
                   <button onClick={() => setModalView('choice')} className="w-full text-xs font-bold text-[#6F6B76]">← Back</button>
                 </div>
               )}

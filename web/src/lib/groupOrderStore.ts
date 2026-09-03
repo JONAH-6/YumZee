@@ -68,7 +68,7 @@ export function parseProductSelectionCode(code: string): { productId: number; qu
     if (!m) return null
     const id = parseInt(m[1], 10)
     const qty = m[2] ? parseInt(m[2], 10) : 1
-    if (id < 1 || id > 50 || qty < 1 || qty > 99) return null
+    if (id < 1 || id > 15 || qty < 1 || qty > 99) return null
     // Do not create duplicate product entries — quantity already captures count
     const existing = result.find(r => r.productId === id)
     if (existing) existing.quantity += qty
