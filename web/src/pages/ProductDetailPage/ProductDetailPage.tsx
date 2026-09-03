@@ -19,8 +19,9 @@ const ProductDetailPage = () => {
   if (!product) return null
 
   const packagePrice = 100
-  const subtotal = product.price + (brandPackage ? packagePrice : 0)
-  const totalPrice = subtotal * quantity
+  const itemTotal = product.price * quantity
+  const packageTotal = brandPackage ? packagePrice : 0
+  const totalPrice = itemTotal + packageTotal
 
   const handleAddToCart = () => {
     addToCart(product, quantity)
