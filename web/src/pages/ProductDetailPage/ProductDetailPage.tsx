@@ -209,7 +209,7 @@ const ProductDetailPage = () => {
       </div>
 
       {/* Sticky Bottom Action Button */}
-      <div className="sticky bottom-16 left-0 right-0 bg-[#FFF9E5] py-3 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+      <div className="sticky bottom-16 z-30 px-4 pb-6">
         <div className="mx-auto max-w-md px-4">
           <button
             onClick={handleAddToCart}
