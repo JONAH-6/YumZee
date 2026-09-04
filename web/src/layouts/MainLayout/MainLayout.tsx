@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { ShoppingCart, User, LogOut, Home, Search, ShoppingBag } from 'lucide-react'
 import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
@@ -9,11 +9,42 @@ const MainLayout = ({ children }) => {
   const { logOut } = useAuth()
 
   const [showFloatingCart, setShowFloatingCart] = useState(false)
+  const [pos, setPos] = useState({ x: 16, y: 0 })
+  const dragging = useRef(false)
+  const offset = useRef({ x: 0, y: 0 })
+  const didDrag = useRef(false)
+
+  useEffect(() => {
+    setPos({ x: 16, y: window.innerHeight - 200 })
+  }, [])
 
   useEffect(() => {
     if (itemCount > 0) setShowFloatingCart(true)
     else setShowFloatingCart(false)
   }, [itemCount])
+
+  const onPointerDown = (e: React.PointerEvent) => {
+    dragging.current = true
+    didDrag.current = false
+    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y }
+    ;(e.target as HTMLElement).setPointerCapture(e.pointerId)
+  }
+
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!dragging.current) return
+    didDrag.current = true
+    setPos({ x: e.clientX - offset.current.x, y: e.clientY - offset.current.y })
+  }
+
+  const onPointerUp = () => {
+    dragging.current = false
+    const margin = 16
+    const width = window.innerWidth
+    const height = window.innerHeight
+    const newX = pos.x < width / 2 ? margin : width - margin - 56
+    const newY = Math.min(Math.max(margin, pos.y), height - margin - 56)
+    setPos({ x: newX, y: newY })
+  }
 
   const handleSignOut = async () => {
     await logOut()
@@ -49,27 +80,27 @@ const MainLayout = ({ children }) => {
         </nav>
       </div>
 
-      {/* Floating Cart Button - Centered on Desktop */}
+      {/* Draggable Floating Cart Button */}
       <div
-        className={`fixed bottom-24 left-0 right-0 z-50 flex justify-center pointer-events-none transition-all duration-500 ease-out ${
-          showFloatingCart ? 'translate-x-0 opacity-100' : '-translate-x-24 opacity-0'
+        className={`fixed z-50 transition-all duration-500 ease-out ${
+          showFloatingCart ? 'translate-x-0 opacity-100' : '-translate-x-24 opacity-0 pointer-events-none'
         }`}
+        style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
       >
-        <div className="relative w-full max-w-md pointer-events-none">
-          <div className="absolute left-4 bottom-0 pointer-events-auto">
-            <button
-              onClick={() => navigate(routes.basket())}
-              className="relative flex h-14 w-14 items-center justify-center rounded-full bg-[#FFC107] shadow-2xl"
-            >
-              <ShoppingCart className="h-6 w-6 text-[#3E2679]" />
-              {itemCount > 0 && (
-                <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#3E2679] text-[10px] font-bold text-white">
-                  {itemCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
+        <button
+          onClick={() => { if (!didDrag.current) navigate(routes.basket()) }}
+          className="relative flex h-14 w-14 cursor-grab items-center justify-center rounded-full bg-[#FFC107] shadow-2xl active:cursor-grabbing"
+        >
+          <ShoppingCart className="h-6 w-6 text-[#3E2679]" />
+          {itemCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#3E2679] text-[10px] font-bold text-white">
+              {itemCount}
+            </span>
+          )}
+        </button>
       </div>
     </div>
   )
