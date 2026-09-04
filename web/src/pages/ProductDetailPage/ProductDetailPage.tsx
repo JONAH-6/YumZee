@@ -38,7 +38,7 @@ const ProductDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF9E5]">
+    <div className="min-h-screen bg-[#FFF9E5] pb-20">
       <Metadata
         title={`Yumzee — ${product.name}`}
         description={`Product detail for ${product.name}`}
@@ -209,7 +209,7 @@ const ProductDetailPage = () => {
       </div>
 
       {/* Sticky Bottom Action Button */}
-      <div className="sticky bottom-0 left-0 right-0 bg-[#FFF9E5] py-3">
+      <div className="sticky bottom-16 left-0 right-0 bg-[#FFF9E5] py-3 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
         <div className="mx-auto max-w-md px-4">
           <button
             onClick={handleAddToCart}
