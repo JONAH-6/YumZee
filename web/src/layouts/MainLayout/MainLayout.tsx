@@ -81,27 +81,27 @@ const MainLayout = ({ children }) => {
       </div>
 
       {/* Draggable Floating Cart Button */}
-      {showFloatingCart && (
-        <div
-          className="fixed z-50"
-          style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
+      <div
+        className={`fixed z-50 transition-all duration-500 ease-out ${
+          showFloatingCart ? 'translate-x-0 opacity-100' : '-translate-x-20 opacity-0 pointer-events-none'
+        }`}
+        style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <button
+          onClick={() => { if (!didDrag.current) navigate(routes.basket()) }}
+          className="relative flex h-14 w-14 cursor-grab items-center justify-center rounded-full bg-[#FFC107] shadow-2xl active:cursor-grabbing"
         >
-          <button
-            onClick={() => { if (!didDrag.current) navigate(routes.basket()) }}
-            className="relative flex h-14 w-14 cursor-grab items-center justify-center rounded-full bg-[#FFC107] shadow-2xl active:cursor-grabbing"
-          >
-            <ShoppingCart className="h-6 w-6 text-[#3E2679]" />
-            {itemCount > 0 && (
-              <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#3E2679] text-[10px] font-bold text-white">
-                {itemCount}
-              </span>
-            )}
-          </button>
-        </div>
-      )}
+          <ShoppingCart className="h-6 w-6 text-[#3E2679]" />
+          {itemCount > 0 && (
+            <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#3E2679] text-[10px] font-bold text-white">
+              {itemCount}
+            </span>
+          )}
+        </button>
+      </div>
     </div>
   )
 }
