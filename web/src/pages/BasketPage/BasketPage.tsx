@@ -12,12 +12,10 @@ const BasketPage = () => {
   const [isGroupActive, setIsGroupActive] = useState(false)
   const [inviteCode, setInviteCode] = useState('')
 
-  const deliveryFee = isGroupActive ? 140 : 200
+  const deliveryFee = 500
   const total = totalPrice + deliveryFee
 
-  const handleGenerateInviteCode = () => {
-    setInviteCode(generateGroupCode(cart))
-  }
+  const handleGenerateInviteCode = () => setInviteCode(generateGroupCode(cart))
 
   const handleJoinGroup = () => {
     const parsedItems = parseGroupCode(groupCodeInput)
@@ -32,7 +30,7 @@ const BasketPage = () => {
     setIsGroupActive(true)
     setIsGroupModalOpen(false)
     setGroupCodeInput('')
-    alert(`Joined! Delivery is now ₦140.`)
+    alert(`Group Joined!`)
   }
 
   const handleStartGroup = () => {
@@ -55,14 +53,12 @@ const BasketPage = () => {
     localStorage.setItem('yumzee_orders', JSON.stringify(existingOrders))
 
     window.dispatchEvent(new Event('yumzee_order_placed'))
-
     alert('Order Placed!')
     navigate('/orders')
   }
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-[#FFF9E5] font-sans text-[#211F26]">
-      {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-[#E9E5EE] bg-white p-4">
         <Link to={routes.home()} className="rounded-full p-1 hover:bg-gray-100">
           <ChevronLeft className="h-6 w-6 text-[#211F26]" />
@@ -71,7 +67,6 @@ const BasketPage = () => {
       </div>
 
       <div className="p-4">
-        {/* Cart Items */}
         <div className="space-y-3">
           {cart.length === 0 ? (
             <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
@@ -102,12 +97,11 @@ const BasketPage = () => {
           )}
         </div>
 
-        {/* Group Order Section */}
         {cart.length > 0 && (
           <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4 shadow-sm">
             {isGroupActive ? (
               <div className="text-center">
-                <span className="text-sm font-bold text-[#3E2679]">Group Order Active (30% Delivery Discount)</span>
+                <span className="text-sm font-bold text-[#3E2679]">Group Order Active</span>
                 <div className="mt-2 bg-[#F5F1FB] p-3 rounded-lg text-xs text-[#4B2E83] break-all">
                   <span className="font-bold">Invite Code:</span> {inviteCode}
                   <button onClick={() => navigator.clipboard.writeText(inviteCode)} className="ml-2 bg-[#FFC928] px-2 py-1 rounded text-black font-bold">Copy</button>
@@ -121,7 +115,6 @@ const BasketPage = () => {
           </div>
         )}
 
-        {/* Totals Card */}
         {cart.length > 0 && (
           <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5 shadow-sm">
             <div className="flex justify-between text-sm mb-2">
@@ -129,7 +122,7 @@ const BasketPage = () => {
               <span className="font-bold">₦{totalPrice.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm mb-4">
-              <span className="text-[#6F6B76]">Campus Delivery {isGroupActive && <span className="text-green-600">(Discounted)</span>}</span>
+              <span className="text-[#6F6B76]">Rider Delivery</span>
               <span className="font-bold">₦{deliveryFee.toLocaleString()}</span>
             </div>
             <div className="flex justify-between border-t border-[#E9E5EE] pt-4">
@@ -139,7 +132,6 @@ const BasketPage = () => {
           </div>
         )}
 
-        {/* Place Order Button */}
         {cart.length > 0 && (
           <button onClick={handlePlaceOrder} className="mt-6 w-full rounded-full bg-[#FFC107] py-4 text-base font-black text-black shadow-lg">
             Place Order — ₦{total.toLocaleString()}
@@ -147,13 +139,10 @@ const BasketPage = () => {
         )}
       </div>
 
-      {/* Group Order Modal */}
       {isGroupModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <button onClick={() => setIsGroupModalOpen(false)} className="absolute right-3 top-3 text-gray-500">
-              <X className="h-5 w-5" />
-            </button>
+            <button onClick={() => setIsGroupModalOpen(false)} className="absolute right-3 top-3 text-gray-500"><X className="h-5 w-5" /></button>
             <h2 className="text-lg font-bold text-[#211F26] mb-4">Group Order</h2>
             <div className="space-y-4">
               <div className="flex flex-col gap-2">
