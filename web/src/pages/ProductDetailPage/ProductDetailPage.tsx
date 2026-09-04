@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 
-import { ArrowLeft, Check } from 'lucide-react'
+import { ArrowLeft, Check, Plus } from 'lucide-react'
 
 import { useParams, navigate } from '@redwoodjs/router'
 import { Metadata } from '@redwoodjs/web'
@@ -15,16 +15,25 @@ const ProductDetailPage = () => {
 
   const [quantity, setQuantity] = useState(1)
   const [brandPackage, setBrandPackage] = useState(false)
+  const [extraWater, setExtraWater] = useState(false)
+
+  const drinks = INITIAL_PRODUCTS.filter((p) => p.category === 'Drinks')
 
   if (!product) return null
 
   const packagePrice = 100
+  const waterPrice = 200
   const itemTotal = product.price * quantity
   const packageTotal = brandPackage ? packagePrice : 0
-  const totalPrice = itemTotal + packageTotal
+  const waterTotal = extraWater ? waterPrice : 0
+  const totalPrice = itemTotal + packageTotal + waterTotal
 
   const handleAddToCart = () => {
     addToCart(product, quantity, brandPackage)
+    if (extraWater) {
+      const water = INITIAL_PRODUCTS.find((p) => p.name === 'Chapman Drink (500ml)')
+      if (water) addToCart(water, 1)
+    }
     navigate('/')
   }
 
@@ -117,6 +126,36 @@ const ProductDetailPage = () => {
             <p className="mt-2 text-xs text-[#6F6B76]">
               Your order will be packed in a branded nylon bag — market style!
             </p>
+
+            {/* Extra Water Option */}
+            <button
+              onClick={() => setExtraWater(!extraWater)}
+              className={`mt-3 flex w-full items-center gap-3 rounded-xl border p-3 text-left ${
+                extraWater
+                  ? 'border-[#3E2679] bg-[#3E2679]'
+                  : 'border-[#E9E5EE] bg-white'
+              }`}
+            >
+              <div
+                className={`flex h-6 w-6 items-center justify-center rounded ${
+                  extraWater
+                    ? 'bg-[#3E2679]'
+                    : 'border border-gray-300 bg-white'
+                }`}
+              >
+                {extraWater && <Check className="h-4 w-4 text-white" />}
+              </div>
+              <span
+                className={`flex-1 text-sm font-medium ${extraWater ? 'text-white' : 'text-[#211F26]'}`}
+              >
+                Extra Bottled Water
+              </span>
+              <span
+                className={`text-sm font-bold ${extraWater ? 'text-white' : 'text-[#3E2679]'}`}
+              >
+                +₦{waterPrice.toLocaleString()}
+              </span>
+            </button>
           </div>
         </div>
       </div>
@@ -149,6 +188,28 @@ const ProductDetailPage = () => {
 
       {/* Spacer */}
       <div className="h-24" />
+
+      {/* Add a Drink Section */}
+      <div className="border-t border-[#E9E5EE] bg-white p-4">
+        <h3 className="mb-4 text-lg font-bold text-[#211F26]">Add a Drink</h3>
+        <div className="space-y-3">
+          {drinks.map((drink) => (
+            <div key={drink.id} className="flex items-center gap-3 rounded-xl border border-[#E9E5EE] p-2">
+              <img src={drink.image} alt={drink.name} className="h-12 w-12 rounded-lg object-cover" />
+              <div className="flex-1">
+                <p className="text-sm font-bold">{drink.name}</p>
+                <p className="text-xs text-[#3E2679]">₦{drink.price.toLocaleString()}</p>
+              </div>
+              <button
+                onClick={() => addToCart(drink, 1)}
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFC107] text-black"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Sticky Bottom Action Button */}
       <div className="sticky bottom-0 left-0 right-0 bg-[#FFF9E5] py-4">
