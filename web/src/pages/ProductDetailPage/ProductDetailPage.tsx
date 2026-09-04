@@ -90,7 +90,7 @@ const ProductDetailPage = () => {
             Customize Your {product.name.split(' (')[0]}
           </h2>
           <p className="mt-1 text-xs font-bold uppercase tracking-widest text-[#6F6B76]">
-            PACKAGING
+            PACKAGING — Make it yours
           </p>
 
           <div className="mt-3">
