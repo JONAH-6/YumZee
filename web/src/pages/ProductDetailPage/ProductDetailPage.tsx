@@ -85,7 +85,7 @@ const ProductDetailPage = () => {
 
       {/* Customize Section (Cream Background #FFF9E5) */}
       <div className="bg-[#FFF9E5]">
-        <div className="mx-auto max-w-md px-4 py-6">
+        <div className="mx-auto max-w-md px-4 py-3">
           <h2 className="text-lg font-bold text-[#211F26]">
             Customize Your {product.name.split(' (')[0]}
           </h2>
@@ -93,7 +93,7 @@ const ProductDetailPage = () => {
             PACKAGING
           </p>
 
-          <div className="mt-4">
+          <div className="mt-3">
             {/* Brand Package Option */}
             <button
               onClick={() => setBrandPackage(!brandPackage)}
@@ -162,7 +162,7 @@ const ProductDetailPage = () => {
 
       {/* Quantity Section (White Background) */}
       <div className="bg-white">
-        <div className="mx-auto max-w-md px-4 py-4">
+        <div className="mx-auto max-w-md px-4 py-3">
           <div className="flex items-center justify-between">
             <span className="text-sm font-bold text-[#211F26]">Quantity</span>
             <div className="flex items-center gap-2">
@@ -187,12 +187,12 @@ const ProductDetailPage = () => {
       </div>
 
       {/* Spacer */}
-      <div className="h-24" />
+      <div className="h-16" />
 
       {/* Add a Drink Section */}
       <div className="border-t border-[#E9E5EE] bg-white p-4">
-        <h3 className="mb-4 text-lg font-bold text-[#211F26]">Add a Drink</h3>
-        <div className="space-y-3">
+        <h3 className="mb-3 text-lg font-bold text-[#211F26]">Add a Drink</h3>
+        <div className="space-y-2">
           {drinks.map((drink) => (
             <div key={drink.id} className="flex items-center gap-3 rounded-xl border border-[#E9E5EE] p-2">
               <img src={drink.image} alt={drink.name} className="h-12 w-12 rounded-lg object-cover" />
@@ -212,7 +212,7 @@ const ProductDetailPage = () => {
       </div>
 
       {/* Sticky Bottom Action Button */}
-      <div className="sticky bottom-0 left-0 right-0 bg-[#FFF9E5] py-4">
+      <div className="sticky bottom-0 left-0 right-0 bg-[#FFF9E5] py-3">
         <div className="mx-auto max-w-md px-4">
           <button
             onClick={handleAddToCart}
