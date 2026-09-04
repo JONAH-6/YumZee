@@ -38,7 +38,7 @@ const ProductDetailPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFF9E5] pb-20">
+    <div className="min-h-screen bg-[#FFF9E5] pb-10">
       <Metadata
         title={`Yumzee — ${product.name}`}
         description={`Product detail for ${product.name}`}
