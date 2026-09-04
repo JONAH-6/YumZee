@@ -15,9 +15,7 @@ const BasketPage = () => {
   const deliveryFee = isGroupActive ? 140 : 200
   const total = totalPrice + deliveryFee
 
-  const handleGenerateInviteCode = () => {
-    setInviteCode(generateGroupCode(cart))
-  }
+  const handleGenerateInviteCode = () => setInviteCode(generateGroupCode(cart))
 
   const handleJoinGroup = () => {
     const parsedItems = parseGroupCode(groupCodeInput)
@@ -62,7 +60,6 @@ const BasketPage = () => {
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-[#FFF9E5] font-sans text-[#211F26]">
-      {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-[#E9E5EE] bg-white p-4">
         <Link to={routes.home()} className="rounded-full p-1 hover:bg-gray-100">
           <ChevronLeft className="h-6 w-6 text-[#211F26]" />
@@ -71,7 +68,6 @@ const BasketPage = () => {
       </div>
 
       <div className="p-4">
-        {/* Cart Items */}
         <div className="space-y-3">
           {cart.length === 0 ? (
             <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
@@ -102,7 +98,6 @@ const BasketPage = () => {
           )}
         </div>
 
-        {/* Group Order Section */}
         {cart.length > 0 && (
           <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4 shadow-sm">
             {isGroupActive ? (
@@ -121,7 +116,6 @@ const BasketPage = () => {
           </div>
         )}
 
-        {/* Totals Card */}
         {cart.length > 0 && (
           <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5 shadow-sm">
             <div className="flex justify-between text-sm mb-2">
@@ -139,7 +133,6 @@ const BasketPage = () => {
           </div>
         )}
 
-        {/* Place Order Button */}
         {cart.length > 0 && (
           <button onClick={handlePlaceOrder} className="mt-6 w-full rounded-full bg-[#FFC107] py-4 text-base font-black text-black shadow-lg">
             Place Order — ₦{total.toLocaleString()}
@@ -147,13 +140,10 @@ const BasketPage = () => {
         )}
       </div>
 
-      {/* Group Order Modal */}
       {isGroupModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-            <button onClick={() => setIsGroupModalOpen(false)} className="absolute right-3 top-3 text-gray-500">
-              <X className="h-5 w-5" />
-            </button>
+            <button onClick={() => setIsGroupModalOpen(false)} className="absolute right-3 top-3 text-gray-500"><X className="h-5 w-5" /></button>
             <h2 className="text-lg font-bold text-[#211F26] mb-4">Group Order</h2>
             <div className="space-y-4">
               <div className="flex flex-col gap-2">
