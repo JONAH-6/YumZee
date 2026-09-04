@@ -123,9 +123,6 @@ const ProductDetailPage = () => {
                 +₦{packagePrice.toLocaleString()}
               </span>
             </button>
-            <p className="mt-2 text-xs text-[#6F6B76]">
-              Your order will be packed in a branded nylon bag — market style!
-            </p>
 
             {/* Extra Water Option */}
             <button
