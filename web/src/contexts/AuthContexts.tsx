@@ -15,7 +15,8 @@ import {
   User,
 } from 'firebase/auth'
 
-import { auth } from 'src/lib/firebase'
+import { auth, db } from 'src/lib/firebase'
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore'
 
 export interface AuthContextType {
   googleSignIn: () => Promise<User | null>
@@ -53,6 +54,17 @@ export const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       const result = await signInWithPopup(auth, provider)
       setUser(result.user)
       setLoading(false)
+
+      // NEW: Automatically save user to 'users' collection in Firestore
+      if (result.user) {
+        await setDoc(doc(db, 'users', result.user.uid), {
+          name: result.user.displayName || 'User',
+          email: result.user.email || '',
+          uid: result.user.uid,
+          lastLogin: serverTimestamp(),
+        })
+      }
+
       return result.user
     } catch (error) {
       setLoading(false)
