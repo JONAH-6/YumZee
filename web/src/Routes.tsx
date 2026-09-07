@@ -11,6 +11,10 @@ import OrdersPage from 'src/pages/OrdersPage/OrdersPage'
 import ProfilePage from 'src/pages/ProfilePage/ProfilePage'
 import NotFoundPage from 'src/pages/NotFoundPage/NotFoundPage'
 
+// NEW ADMIN IMPORTS
+import AdminLoginPage from 'src/pages/AdminLoginPage/AdminLoginPage'
+import AdminPortalPage from 'src/pages/AdminPortalPage/AdminPortalPage'
+
 const Routes = () => {
   const { isAuthenticated } = useAuth()
 
@@ -20,7 +24,7 @@ const Routes = () => {
         <Set wrap={MainLayout}>
           <Route path="/" page={HomePage} name="home" />
           <Route path="/search" page={SearchPage} name="search" />
-          <Route path="/product/{id:Int}" page={ProductDetailPage} name="productDetail" />
+          <Route path="/product/{id}" page={ProductDetailPage} name="productDetail" />
           <Route path="/basket" page={BasketPage} name="basket" />
           <Route path="/orders" page={OrdersPage} name="orders" />
           <Route path="/profile" page={ProfilePage} name="profile" />
@@ -28,6 +32,11 @@ const Routes = () => {
       ) : (
         <Route path="/" page={WelcomePage} name="welcome" />
       )}
+
+      {/* ADMIN ROUTES (Outside MainLayout so there is no mobile bottom nav) */}
+      <Route path="/admin-login" page={AdminLoginPage} name="adminLogin" />
+      <Route path="/admin" page={AdminPortalPage} name="admin" />
+
       <Route notfound page={NotFoundPage} />
     </Router>
   )

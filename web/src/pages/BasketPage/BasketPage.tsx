@@ -4,15 +4,20 @@ import { useCart } from 'src/components/CartContext/CartContext'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
 import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
 import { Trash2, ChevronLeft, Users, X } from 'lucide-react'
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { db } from 'src/lib/firebase'
+import { useAuth } from 'src/contexts/AuthContexts'
 
 const BasketPage = () => {
   const { cart, removeFromCart, updateQuantity, totalPrice, addToCart } = useCart()
+  const { user } = useAuth()
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
   const [groupCodeInput, setGroupCodeInput] = useState('')
   const [isGroupActive, setIsGroupActive] = useState(false)
   const [inviteCode, setInviteCode] = useState('')
+  const [isPlacingOrder, setIsPlacingOrder] = useState(false)
 
-  const deliveryFee = 500
+  const deliveryFee = isGroupActive ? 140 : 500
   const total = totalPrice + deliveryFee
 
   const handleGenerateInviteCode = () => setInviteCode(generateGroupCode(cart))
@@ -20,7 +25,6 @@ const BasketPage = () => {
   const handleJoinGroup = () => {
     const parsedItems = parseGroupCode(groupCodeInput)
     if (parsedItems.length === 0) {
-      alert('Invalid code. Use like: 1×3,5×2')
       return
     }
     parsedItems.forEach(({ id, quantity }) => {
@@ -30,7 +34,6 @@ const BasketPage = () => {
     setIsGroupActive(true)
     setIsGroupModalOpen(false)
     setGroupCodeInput('')
-    alert(`Group Joined!`)
   }
 
   const handleStartGroup = () => {
@@ -39,22 +42,35 @@ const BasketPage = () => {
     setIsGroupModalOpen(false)
   }
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (cart.length === 0) return
-    const newOrder = {
-      id: Date.now(),
-      items: cart,
-      total: total,
-      date: new Date().toISOString(),
-      status: 'Placed',
+    setIsPlacingOrder(true)
+    try {
+      await addDoc(collection(db, 'orders'), {
+        customerName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
+        customerEmail: user?.email || '',
+        items: cart.map((item) => ({
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image,
+        })),
+        subtotal: totalPrice,
+        deliveryFee: deliveryFee,
+        total: total,
+        groupActive: isGroupActive,
+        groupCode: inviteCode,
+        createdAt: serverTimestamp(),
+      })
+      // NO ALERT HERE - Just go to the Orders page
+      navigate('/orders')
+    } catch (error) {
+      console.error('Error placing order:', error)
+      // NO ALERT HERE - Just show a console error
+    } finally {
+      setIsPlacingOrder(false)
     }
-    const existingOrders = JSON.parse(localStorage.getItem('yumzee_orders') || '[]')
-    existingOrders.unshift(newOrder)
-    localStorage.setItem('yumzee_orders', JSON.stringify(existingOrders))
-
-    window.dispatchEvent(new Event('yumzee_order_placed'))
-    alert('Order Placed!')
-    navigate('/orders')
   }
 
   return (
@@ -101,7 +117,7 @@ const BasketPage = () => {
           <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4 shadow-sm">
             {isGroupActive ? (
               <div className="text-center">
-                <span className="text-sm font-bold text-[#3E2679]">Group Order Active</span>
+                <span className="text-sm font-bold text-[#3E2679]">Group Order Active (30% Delivery Discount)</span>
                 <div className="mt-2 bg-[#F5F1FB] p-3 rounded-lg text-xs text-[#4B2E83] break-all">
                   <span className="font-bold">Invite Code:</span> {inviteCode}
                   <button onClick={() => navigator.clipboard.writeText(inviteCode)} className="ml-2 bg-[#FFC928] px-2 py-1 rounded text-black font-bold">Copy</button>
@@ -122,7 +138,7 @@ const BasketPage = () => {
               <span className="font-bold">₦{totalPrice.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm mb-4">
-              <span className="text-[#6F6B76]">Rider Delivery</span>
+              <span className="text-[#6F6B76]">Rider Delivery {isGroupActive && <span className="text-green-600">(Discounted)</span>}</span>
               <span className="font-bold">₦{deliveryFee.toLocaleString()}</span>
             </div>
             <div className="flex justify-between border-t border-[#E9E5EE] pt-4">
@@ -132,9 +148,9 @@ const BasketPage = () => {
           </div>
         )}
 
-        {cart.length > 0 && (
-          <button onClick={handlePlaceOrder} className="mt-6 w-full rounded-full bg-[#FFC107] py-4 text-base font-black text-black shadow-lg">
-            Place Order — ₦{total.toLocaleString()}
+               {cart.length > 0 && (
+          <button onClick={handlePlaceOrder} disabled={isPlacingOrder} className="mt-6 w-full rounded-full bg-[#FFC107] py-4 text-base font-black text-black shadow-lg disabled:opacity-50">
+            {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
           </button>
         )}
       </div>

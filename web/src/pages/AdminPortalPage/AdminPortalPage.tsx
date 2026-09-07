@@ -1,466 +1,398 @@
-// web/src/pages/AdminPortalPage/AdminPortalPage.tsx
-import React, { useState, useEffect } from 'react'
-import { Link } from '@redwoodjs/router'
+import { useState, useEffect } from 'react'
+import { navigate, routes } from '@redwoodjs/router'
 import { Metadata } from '@redwoodjs/web'
+import { db } from 'src/lib/firebase'
+import { collection, onSnapshot, addDoc, serverTimestamp } from 'firebase/firestore'
 import {
-  OrderStore,
-  SingleOrder,
-  GroupOrder,
-  GroupOrderRules,
-  DEFAULT_GROUP_RULES,
-  OrderStatus,
-} from 'src/lib/orderStore'
-import {
-  ShieldCheck,
-  Settings,
+  LayoutDashboard,
+  ShoppingBag,
+  Package,
   Users,
-  TrendingDown,
-  MapPin,
-  Truck,
   Plus,
   Trash2,
-  Check,
-  AlertTriangle,
-  RotateCcw,
-  Sparkles,
-  DollarSign,
-  Package,
-  Clock,
+  LogOut,
+  Loader2,
   CheckCircle2,
+  Clock,
+  Mail,
+  MapPin,
+  Phone,
+  Box,
+  CreditCard,
 } from 'lucide-react'
 
 const AdminPortalPage = () => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'rules' | 'locations' | 'analytics'>('orders')
-  const [singleOrders, setSingleOrders] = useState<SingleOrder[]>([])
-  const [groupOrders, setGroupOrders] = useState<GroupOrder[]>([])
-  const [rules, setRules] = useState<GroupOrderRules>(DEFAULT_GROUP_RULES)
-  const [savedSuccess, setSavedSuccess] = useState(false)
+  // Tabs state
+  const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'products' | 'profiles'>('overview')
 
-  // Location form state
-  const [newLocName, setNewLocName] = useState('')
-  const [newLocZone, setNewLocZone] = useState('Hostel Zone')
+  // Data states (Real-time)
+  const [orders, setOrders] = useState<any[]>([])
+  const [products, setProducts] = useState<any[]>([])
+  const [profiles, setProfiles] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  const reloadData = () => {
-    setSingleOrders(OrderStore.getSingleOrders())
-    setGroupOrders(OrderStore.getGroupOrders())
-    setRules(OrderStore.getRules())
-  }
+  // Product upload form state
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    price: '',
+    image: '',
+    code: '',
+    description: '',
+    category: '',
+  })
+  const [isAddingProduct, setIsAddingProduct] = useState(false)
+  const [productSuccess, setProductSuccess] = useState(false)
 
+  // Real-time Listeners
   useEffect(() => {
-    reloadData()
-    const handleUpdate = () => reloadData()
-    window.addEventListener('yumzee_store_update', handleUpdate)
-    return () => window.removeEventListener('yumzee_store_update', handleUpdate)
+    // Orders Listener
+    const unsubOrders = onSnapshot(collection(db, 'orders'), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      setOrders(data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)))
+    })
+
+    // Products Listener
+    const unsubProducts = onSnapshot(collection(db, 'products'), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      setProducts(data.sort((a, b) => a.code - b.code))
+    })
+
+    // Profiles Listener
+    const unsubProfiles = onSnapshot(collection(db, 'profiles'), (snapshot) => {
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      setProfiles(data)
+    })
+
+    setIsLoading(false)
+
+    // Cleanup
+    return () => {
+      unsubOrders()
+      unsubProducts()
+      unsubProfiles()
+    }
   }, [])
 
-  const handleSaveRules = (e: React.FormEvent) => {
+  // Add Product to Firebase
+  const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
-    OrderStore.saveRules(rules)
-    setSavedSuccess(true)
-    setTimeout(() => setSavedSuccess(false), 2500)
-  }
+    if (!newProduct.name || !newProduct.price || !newProduct.code) return
 
-  const handleToggleLocation = (locId: string) => {
-    const updatedLocs = rules.eligibleLocations.map((l) =>
-      l.id === locId ? { ...l, active: !l.active } : l
-    )
-    const newRules = { ...rules, eligibleLocations: updatedLocs }
-    setRules(newRules)
-    OrderStore.saveRules(newRules)
-  }
+    setIsAddingProduct(true)
+    try {
+      await addDoc(collection(db, 'products'), {
+        name: newProduct.name,
+        price: Number(newProduct.price),
+        image: newProduct.image,
+        code: Number(newProduct.code),
+        description: newProduct.description,
+        category: newProduct.category || 'Snacks',
+        createdAt: serverTimestamp(),
+      })
 
-  const handleAddLocation = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newLocName.trim()) return
-
-    const newLoc = {
-      id: `loc-${Date.now()}`,
-      name: newLocName.trim(),
-      zone: newLocZone,
-      active: true,
-    }
-
-    const newRules = {
-      ...rules,
-      eligibleLocations: [...rules.eligibleLocations, newLoc],
-    }
-
-    setRules(newRules)
-    OrderStore.saveRules(newRules)
-    setNewLocName('')
-  }
-
-  const handleCancelOrder = (orderId: string) => {
-    if (confirm(`Are you sure you want to cancel Order #${orderId}?`)) {
-      OrderStore.updateOrderStatus(orderId, 'cancelled')
+      // Reset form
+      setNewProduct({ name: '', price: '', image: '', code: '', description: '', category: '' })
+      setProductSuccess(true)
+      setTimeout(() => setProductSuccess(false), 3000)
+    } catch (error) {
+      console.error('Error adding product:', error)
+    } finally {
+      setIsAddingProduct(false)
     }
   }
 
-  // Analytics calculation
-  const totalRevenue =
-    singleOrders.reduce((sum, s) => sum + s.totalAmount, 0) +
-    groupOrders.reduce((sum, g) => sum + g.grandTotal, 0)
-
-  const totalDeliverySavings = groupOrders.reduce((sum, g) => {
-    const originalDelivery = g.baseDeliveryFee * g.participants.length
-    const actualDelivery = g.finalDeliveryFee
-    return sum + Math.max(0, originalDelivery - actualDelivery)
-  }, 0)
+  // Format date from timestamp
+  const formatDate = (timestamp: any) => {
+    if (!timestamp) return 'No Date'
+    const date = timestamp.seconds ? new Date(timestamp.seconds * 1000) : new Date(timestamp)
+    return date.toLocaleString()
+  }
 
   return (
-    <div className="min-h-screen bg-[#FAF8FD] py-6">
-      <Metadata title="Admin — YumZee" description="Manage orders and rules." />
+    <div className="min-h-screen bg-red-50">
+      <Metadata title="Admin Portal" description="YumZee Admin" />
 
-      <div className="w-full max-w-6xl mx-auto px-2 sm:px-3 space-y-6">
-        {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      {/* Header */}
+      <header className="bg-red-600 text-white shadow-lg">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#4B2E83] text-white">
-              <ShieldCheck className="h-5 w-5" />
+            <LayoutDashboard className="h-8 w-8" />
+            <div>
+              <h1 className="text-2xl font-black">YumZee Admin</h1>
+              <p className="text-xs text-red-200">Real-time Dashboard</p>
             </div>
-            <h1 className="text-xl font-black text-[#211F26]">Admin</h1>
           </div>
+          <button
+            onClick={() => navigate(routes.home())}
+            className="flex items-center gap-2 rounded-lg bg-white/20 px-4 py-2 text-sm font-bold hover:bg-white/30"
+          >
+            <LogOut className="h-4 w-4" /> Exit
+          </button>
+        </div>
+      </header>
 
-          {/* Tabs */}
-          <div className="flex rounded-2xl border border-[#E9E5EE] bg-white p-1 shadow-sm overflow-x-auto">
-            {[
-              { key: 'orders', label: 'Orders', icon: Package },
-              { key: 'rules', label: 'Rules', icon: Settings },
-              { key: 'locations', label: 'Locations', icon: MapPin },
-              { key: 'analytics', label: 'Analytics', icon: TrendingDown },
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
-                className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-bold whitespace-nowrap transition ${
-                  activeTab === tab.key
-                    ? 'bg-[#4B2E83] text-white shadow'
-                    : 'text-[#6F6B76] hover:text-[#211F26]'
-                }`}
-              >
-                <tab.icon className="h-3.5 w-3.5" />
-                <span>{tab.label}</span>
-              </button>
-            ))}
-          </div>
+      {/* Tabs */}
+      <div className="mx-auto max-w-7xl px-6 py-6">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setActiveTab('overview')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${activeTab === 'overview' ? 'bg-red-600 text-white' : 'bg-white text-red-600 border border-red-200'}`}
+          >
+            <LayoutDashboard className="h-4 w-4" /> Overview
+          </button>
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${activeTab === 'orders' ? 'bg-red-600 text-white' : 'bg-white text-red-600 border border-red-200'}`}
+          >
+            <ShoppingBag className="h-4 w-4" /> Orders ({orders.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('products')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${activeTab === 'products' ? 'bg-red-600 text-white' : 'bg-white text-red-600 border border-red-200'}`}
+          >
+            <Package className="h-4 w-4" /> Products ({products.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('profiles')}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition ${activeTab === 'profiles' ? 'bg-red-600 text-white' : 'bg-white text-red-600 border border-red-200'}`}
+          >
+            <Users className="h-4 w-4" /> Profiles ({profiles.length})
+          </button>
         </div>
 
-        {/* TAB 1: ORDERS */}
-        {activeTab === 'orders' && (
-          <div className="space-y-6">
-            {/* Group Orders */}
-            <div className="rounded-2xl border border-[#E9E5EE] bg-white p-3 shadow-sm space-y-4">
-              <div className="flex items-center gap-2 border-b border-[#E9E5EE] pb-3">
-                <Users className="h-4 w-4 text-[#4B2E83]" />
-                <h3 className="font-bold text-sm text-[#211F26]">Group Orders ({groupOrders.length})</h3>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b border-[#E9E5EE] bg-[#FAF8FD] text-[#6F6B76] uppercase font-bold text-[10px]">
-                    <tr>
-                      <th className="p-3">Group Code</th>
-                      <th className="p-3">Title & Host</th>
-                      <th className="p-3">Hostel Drop</th>
-                      <th className="p-3">Students</th>
-                      <th className="p-3">Total Amount</th>
-                      <th className="p-3">Discount</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E9E5EE]">
-                    {groupOrders.map((grp) => (
-                      <tr key={grp.id} className="hover:bg-[#FAF8FD]/80">
-                        <td className="p-3 font-mono font-bold text-[#4B2E83]">{grp.groupCode}</td>
-                        <td className="p-3">
-                          <p className="font-bold text-[#211F26]">{grp.title}</p>
-                          <p className="text-[11px] text-[#6F6B76]">Host: {grp.hostName}</p>
-                        </td>
-                        <td className="p-3 text-[#6F6B76]">{grp.hostelAddress}</td>
-                        <td className="p-3 font-bold text-[#211F26]">
-                          {grp.participants.length} students
-                        </td>
-                        <td className="p-3 font-black text-[#4B2E83]">?{grp.grandTotal.toLocaleString()}</td>
-                        <td className="p-3">
-                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
-                            {grp.discountPercent}% Off
-                          </span>
-                        </td>
-                        <td className="p-3">
-                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-black text-[#4B2E83] capitalize">
-                            {grp.status.replace(/_/g, ' ')}
-                          </span>
-                        </td>
-                        <td className="p-3 text-right space-x-2">
-                          <Link
-                            to={`/group/${grp.groupCode}`}
-                            className="rounded-lg bg-[#FAF8FD] border border-[#E9E5EE] px-2.5 py-1 text-[11px] font-bold text-[#4B2E83] hover:bg-gray-100"
-                          >
-                            Room
-                          </Link>
-                          {grp.status !== 'cancelled' && (
-                            <button
-                              onClick={() => handleCancelOrder(grp.id)}
-                              className="rounded-lg bg-rose-50 px-2.5 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-100"
-                            >
-                              Cancel
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+        {/* Content */}
+        <div className="mt-6">
+          {isLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="h-10 w-10 animate-spin text-red-600" />
             </div>
-
-            {/* Single Orders */}
-            <div className="rounded-2xl border border-[#E9E5EE] bg-white p-3 shadow-sm space-y-4">
-              <div className="flex items-center gap-2 border-b border-[#E9E5EE] pb-3">
-                <Package className="h-4 w-4 text-[#4B2E83]" />
-                <h3 className="font-bold text-sm text-[#211F26]">Single Orders ({singleOrders.length})</h3>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="border-b border-[#E9E5EE] bg-[#FAF8FD] text-[#6F6B76] uppercase font-bold text-[10px]">
-                    <tr>
-                      <th className="p-3">Order ID</th>
-                      <th className="p-3">Customer</th>
-                      <th className="p-3">Location / Room</th>
-                      <th className="p-3">Items Count</th>
-                      <th className="p-3">Total Paid</th>
-                      <th className="p-3">Status</th>
-                      <th className="p-3 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E9E5EE]">
-                    {singleOrders.map((sgl) => (
-                      <tr key={sgl.id} className="hover:bg-[#FAF8FD]/80">
-                        <td className="p-3 font-mono font-bold text-[#4B2E83]">#{sgl.id}</td>
-                        <td className="p-3">
-                          <p className="font-bold text-[#211F26]">{sgl.customerName}</p>
-                          <p className="text-[11px] text-[#6F6B76]">{sgl.customerPhone}</p>
-                        </td>
-                        <td className="p-3">
-                          <p className="text-[#211F26]">{sgl.hostelAddress}</p>
-                          <p className="text-[11px] text-[#6F6B76]">{sgl.roomNumber}</p>
-                        </td>
-                        <td className="p-3 font-bold text-[#211F26]">{sgl.items.length} items</td>
-                        <td className="p-3 font-black text-[#4B2E83]">?{sgl.totalAmount.toLocaleString()}</td>
-                        <td className="p-3">
-                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-black text-[#4B2E83] capitalize">
-                            {sgl.status.replace(/_/g, ' ')}
-                          </span>
-                        </td>
-                        <td className="p-3 text-right space-x-2">
-                          <Link
-                            to={`/track/${sgl.id}`}
-                            className="rounded-lg bg-[#FAF8FD] border border-[#E9E5EE] px-2.5 py-1 text-[11px] font-bold text-[#4B2E83] hover:bg-gray-100"
-                          >
-                            Track
-                          </Link>
-                          {sgl.status !== 'cancelled' && (
-                            <button
-                              onClick={() => handleCancelOrder(sgl.id)}
-                              className="rounded-lg bg-rose-50 px-2.5 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-100"
-                            >
-                              Cancel
-                            </button>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* TAB 2: RULES */}
-        {activeTab === 'rules' && (
-          <form onSubmit={handleSaveRules} className="space-y-6">
-            <div className="rounded-2xl border border-[#E9E5EE] bg-white p-3 shadow-sm space-y-4">
-              <div className="border-b border-[#E9E5EE] pb-3">
-                <h3 className="font-bold text-sm text-[#211F26]">Pricing & Discounts</h3>
-                <p className="text-xs text-[#6F6B76] mt-1">Changes apply to open groups.</p>
-              </div>
-
-              {/* Base Fees */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#6F6B76] mb-1">
-                    Standard Single Delivery Fee (?)
-                  </label>
-                  <input
-                    type="number"
-                    value={rules.baseDeliveryFee}
-                    onChange={(e) => setRules({ ...rules, baseDeliveryFee: Number(e.target.value) })}
-                    className="w-full rounded-2xl border border-[#E9E5EE] bg-[#FAF8FD] p-3 text-sm font-bold text-[#211F26] focus:border-[#4B2E83] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#6F6B76] mb-1">
-                    Campus Service & Packaging Fee (?)
-                  </label>
-                  <input
-                    type="number"
-                    value={rules.serviceFee}
-                    onChange={(e) => setRules({ ...rules, serviceFee: Number(e.target.value) })}
-                    className="w-full rounded-2xl border border-[#E9E5EE] bg-[#FAF8FD] p-3 text-sm font-bold text-[#211F26] focus:border-[#4B2E83] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-[#6F6B76] mb-1">
-                    Default Deadline Duration (Mins)
-                  </label>
-                  <input
-                    type="number"
-                    value={rules.defaultDeadlineMinutes}
-                    onChange={(e) => setRules({ ...rules, defaultDeadlineMinutes: Number(e.target.value) })}
-                    className="w-full rounded-2xl border border-[#E9E5EE] bg-[#FAF8FD] p-3 text-sm font-bold text-[#211F26] focus:border-[#4B2E83] focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Tiered Discount Rules */}
-              <div className="space-y-3">
-                <label className="block text-xs font-bold uppercase tracking-wider text-[#6F6B76]">
-                  Tiered Student Discount Levels
-                </label>
-
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                  {rules.discountTiers.map((tier, idx) => (
-                    <div key={idx} className="rounded-2xl border border-[#E9E5EE] bg-[#FAF8FD] p-4 space-y-2">
-                      <span className="text-xs font-bold text-[#4B2E83]">
-                        Tier {idx + 1}: {tier.minStudents}+ Student{tier.minStudents > 1 ? 's' : ''}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="number"
-                          value={tier.discountPercent}
-                          onChange={(e) => {
-                            const val = Number(e.target.value)
-                            const newTiers = [...rules.discountTiers]
-                            newTiers[idx] = { ...tier, discountPercent: val }
-                            setRules({ ...rules, discountTiers: newTiers })
-                          }}
-                          className="w-20 rounded-xl border border-[#E9E5EE] bg-white p-2 text-center text-sm font-black text-[#211F26]"
-                        />
-                        <span className="text-xs font-bold text-[#6F6B76]">% Off</span>
-                      </div>
-                      <p className="text-[10px] text-[#A09BA8]">{tier.label}</p>
+          ) : (
+            <>
+              {/* OVERVIEW */}
+              {activeTab === 'overview' && (
+                <div className="space-y-6">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                    <div className="rounded-2xl bg-red-600 p-6 text-white shadow-lg">
+                      <h3 className="text-lg font-bold">Total Orders</h3>
+                      <p className="mt-2 text-5xl font-black">{orders.length}</p>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Save */}
-              <div className="flex items-center justify-between border-t border-[#E9E5EE] pt-4">
-                {savedSuccess ? (
-                  <span className="flex items-center gap-1 text-xs font-bold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200"><CheckCircle2 className="h-4 w-4" /> Saved</span>
-                ) : (
-                  <span className="text-xs text-[#6F6B76]">Commit changes.</span>
-                )}
-                <button type="submit" className="rounded-2xl bg-[#FFC928] px-6 py-3 text-sm font-bold text-[#4B2E83]">Save Rules</button>
-              </div>
-            </div>
-          </form>
-        )}
-
-        {/* TAB 3: LOCATIONS */}
-        {activeTab === 'locations' && (
-          <div className="space-y-6">
-            <div className="rounded-2xl border border-[#E9E5EE] bg-white p-3 shadow-sm space-y-3">
-              <h3 className="font-bold text-sm text-[#211F26]">Add Location</h3>
-              <form onSubmit={handleAddLocation} className="flex flex-col sm:flex-row gap-3">
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. King Jaja Hall ? Gate 2"
-                  value={newLocName}
-                  onChange={(e) => setNewLocName(e.target.value)}
-                  className="flex-1 rounded-2xl border border-[#E9E5EE] bg-[#FAF8FD] p-3 text-sm font-semibold text-[#211F26] focus:border-[#4B2E83] focus:outline-none"
-                />
-                <select
-                  value={newLocZone}
-                  onChange={(e) => setNewLocZone(e.target.value)}
-                  className="rounded-2xl border border-[#E9E5EE] bg-[#FAF8FD] p-3 text-sm font-semibold text-[#211F26]"
-                >
-                  <option value="Female Hostel Zone">Female Hostel Zone</option>
-                  <option value="Male Hostel Zone">Male Hostel Zone</option>
-                  <option value="Hostel Complex">Hostel Complex</option>
-                  <option value="Academic Zone">Academic Zone</option>
-                </select>
-                <button
-                  type="submit"
-                  className="flex items-center justify-center gap-1.5 rounded-2xl bg-[#4B2E83] px-6 py-3 text-xs font-black text-white hover:bg-[#371F62] transition shadow"
-                >
-                  <Plus className="h-4 w-4" />
-                  <span>Add Location</span>
-                </button>
-              </form>
-            </div>
-
-            {/* Locations List */}
-            <div className="rounded-2xl border border-[#E9E5EE] bg-white p-3 shadow-sm space-y-3">
-              <h3 className="font-bold text-sm text-[#211F26]">Locations ({rules.eligibleLocations.length})</h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {rules.eligibleLocations.map((loc) => (
-                  <div
-                    key={loc.id}
-                    className="flex items-center justify-between rounded-2xl border border-[#E9E5EE] bg-[#FAF8FD] p-4"
-                  >
-                    <div className="space-y-0.5">
-                      <h4 className="font-bold text-sm text-[#211F26]">{loc.name}</h4>
-                      <span className="text-xs text-[#6F6B76]">{loc.zone}</span>
+                    <div className="rounded-2xl bg-white p-6 text-red-600 shadow-lg border border-red-100">
+                      <h3 className="text-lg font-bold">Total Products</h3>
+                      <p className="mt-2 text-5xl font-black">{products.length}</p>
                     </div>
-
-                    <button
-                      onClick={() => handleToggleLocation(loc.id)}
-                      className={`rounded-xl px-3 py-1 text-xs font-bold transition ${
-                        loc.active
-                          ? 'bg-emerald-100 text-emerald-800'
-                          : 'bg-gray-200 text-gray-600'
-                      }`}
-                    >
-                      {loc.active ? 'Active' : 'Disabled'}
-                    </button>
+                    <div className="rounded-2xl bg-white p-6 text-red-600 shadow-lg border border-red-100">
+                      <h3 className="text-lg font-bold">Registered Users</h3>
+                      <p className="mt-2 text-5xl font-black">{profiles.length}</p>
+                    </div>
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
 
-        {/* TAB 4: ANALYTICS */}
-        {activeTab === 'analytics' && (
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-[#E9E5EE] bg-white p-3 shadow-sm">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#6F6B76]">Revenue</span>
-              <div className="text-xl font-bold text-[#4B2E83]">₦{totalRevenue.toLocaleString()}</div>
-              <p className="text-xs text-[#6F6B76]">Combined orders.</p>
-            </div>
-            <div className="rounded-2xl border border-emerald-500 bg-emerald-50 p-3 shadow-sm">
-              <span className="text-xs font-black uppercase tracking-wider text-emerald-800">Delivery Savings</span>
-              <div className="text-xl font-bold text-emerald-700">₦{totalDeliverySavings.toLocaleString()}</div>
-              <p className="text-xs text-emerald-800">Saved via group orders.</p>
-            </div>
-            <div className="rounded-2xl border border-[#E9E5EE] bg-white p-3 shadow-sm">
-              <span className="text-xs font-bold uppercase tracking-wider text-[#6F6B76]">Routes</span>
-              <div className="text-xl font-bold text-[#211F26]">{singleOrders.length + groupOrders.length}</div>
-              <p className="text-xs text-[#6F6B76]">Total orders.</p>
-            </div>
-          </div>
-        )}
+                  <div className="rounded-2xl bg-white p-6 shadow-lg border border-red-100">
+                    <h2 className="mb-4 text-xl font-black text-red-600">Live Orders Feed</h2>
+                    {orders.length === 0 ? (
+                      <p className="py-8 text-center text-gray-400">No orders yet...</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {orders.slice(0, 5).map((order) => (
+                          <div key={order.id} className="flex items-center justify-between rounded-xl border border-red-100 p-4">
+                            <div>
+                              <p className="font-bold text-gray-800">{order.customerName || 'Customer'}</p>
+                              <p className="text-xs text-gray-500">{formatDate(order.createdAt)}</p>
+                            </div>
+                            <span className="text-lg font-black text-red-600">₦{order.total?.toLocaleString() || '0'}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* ORDERS */}
+              {activeTab === 'orders' && (
+                <div className="rounded-2xl bg-white p-6 shadow-lg border border-red-100">
+                  <h2 className="mb-4 text-xl font-black text-red-600">All Orders</h2>
+                  {orders.length === 0 ? (
+                    <p className="py-8 text-center text-gray-400">No orders yet...</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {orders.map((order) => (
+                        <div key={order.id} className="rounded-xl border border-red-200 p-4">
+                          <div className="mb-2 flex justify-between items-center border-b border-red-100 pb-2">
+                            <div>
+                              <p className="font-bold text-gray-800">{order.customerName || 'Customer'}</p>
+                              <p className="text-xs text-gray-500">{order.customerPhone || 'No Phone'}</p>
+                            </div>
+                            <span className="text-lg font-black text-red-600">₦{order.total?.toLocaleString() || '0'}</span>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <p className="mb-2 flex items-center gap-2 text-xs font-bold text-red-600">
+                                <ShoppingBag className="h-4 w-4" /> Items
+                              </p>
+                              {order.items?.map((item: any) => (
+                                <p key={item.id} className="text-sm text-gray-600">
+                                  {item.quantity} x {item.name} — ₦{(item.price * item.quantity).toLocaleString()}
+                                </p>
+                              ))}
+                            </div>
+                            <div>
+                              <p className="mb-2 flex items-center gap-2 text-xs font-bold text-red-600">
+                                <MapPin className="h-4 w-4" /> Delivery
+                              </p>
+                              <p className="text-sm text-gray-600">{order.address || order.hostel || 'No Address'}</p>
+                            </div>
+                          </div>
+                          <div className="mt-4 border-t border-red-100 pt-2">
+                            <p className="flex items-center gap-2 text-xs text-gray-400">
+                              <Clock className="h-4 w-4" /> Placed at: {formatDate(order.createdAt)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PRODUCTS */}
+              {activeTab === 'products' && (
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                  {/* Product List */}
+                  <div className="lg:col-span-2 rounded-2xl bg-white p-6 shadow-lg border border-red-100">
+                    <h2 className="mb-4 text-xl font-black text-red-600">All Products</h2>
+                    {products.length === 0 ? (
+                      <p className="py-8 text-center text-gray-400">No products uploaded yet...</p>
+                    ) : (
+                      <div className="space-y-3">
+                        {products.map((product) => (
+                          <div key={product.id} className="flex items-center gap-4 rounded-xl border border-red-100 p-3">
+                            {product.image && (
+                              <img src={product.image} alt={product.name} className="h-16 w-16 rounded-lg object-cover" />
+                            )}
+                            <div className="flex-1">
+                              <p className="font-bold text-gray-800">#{product.code} {product.name}</p>
+                              <p className="text-xs text-gray-500">{product.category}</p>
+                              <p className="text-sm font-black text-red-600">₦{product.price?.toLocaleString()}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Add New Product */}
+                  <div className="rounded-2xl bg-red-600 p-6 shadow-lg text-white">
+                    <h2 className="mb-4 text-xl font-black">Upload New Product</h2>
+                    {productSuccess && (
+                      <div className="mb-4 flex items-center gap-2 rounded-lg bg-white p-3 text-red-600">
+                        <CheckCircle2 className="h-5 w-5" /> Product Added Successfully!
+                      </div>
+                    )}
+                    <form onSubmit={handleAddProduct} className="space-y-4">
+                      <input
+                        type="text"
+                        placeholder="Product Name"
+                        value={newProduct.name}
+                        onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                        required
+                        className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Product Number (e.g., 16)"
+                        value={newProduct.code}
+                        onChange={(e) => setNewProduct({ ...newProduct, code: e.target.value })}
+                        required
+                        className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300"
+                      />
+                      <input
+                        type="number"
+                        placeholder="Price (₦)"
+                        value={newProduct.price}
+                        onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })}
+                        required
+                        className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300"
+                      />
+                      <input
+                        type="text"
+                        placeholder="IMGUR Image Link"
+                        value={newProduct.image}
+                        onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                        className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Category (e.g., Snacks)"
+                        value={newProduct.category}
+                        onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                        className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300"
+                      />
+                      <textarea
+                        placeholder="Full Description"
+                        value={newProduct.description}
+                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                        rows={3}
+                        className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300"
+                      />
+                      <button
+                        type="submit"
+                        disabled={isAddingProduct}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-white py-3 text-sm font-black text-red-600 hover:bg-red-100 transition disabled:opacity-50"
+                      >
+                        {isAddingProduct ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}
+                        {isAddingProduct ? 'Uploading...' : 'Add Product'}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+
+              {/* PROFILES */}
+              {activeTab === 'profiles' && (
+                <div className="rounded-2xl bg-white p-6 shadow-lg border border-red-100">
+                  <h2 className="mb-4 text-xl font-black text-red-600">Registered User Profiles</h2>
+                  {profiles.length === 0 ? (
+                    <p className="py-8 text-center text-gray-400">No profiles yet...</p>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                      {profiles.map((profile) => (
+                        <div key={profile.id} className="rounded-xl border border-red-200 p-4">
+                          <div className="mb-3 flex items-center gap-3 border-b border-red-100 pb-3">
+                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-xl font-black text-white">
+                              {profile.name?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div>
+                              <p className="font-bold text-gray-800">{profile.name || 'Unknown'}</p>
+                              <p className="flex items-center gap-1 text-xs text-gray-500">
+                                <Mail className="h-3 w-3" /> {profile.email}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <p className="flex items-center gap-2 text-sm text-gray-600">
+                              <MapPin className="h-4 w-4 text-red-500" /> {profile.hostel || 'No Address'}
+                            </p>
+                            <p className="flex items-center gap-2 text-sm text-gray-600">
+                              <Phone className="h-4 w-4 text-red-500" /> {profile.phone || 'No Phone'}
+                            </p>
+                            <p className="flex items-center gap-2 text-xs text-gray-400">
+                              <Clock className="h-3 w-3" /> Updated: {formatDate(profile.updatedAt)}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
 export default AdminPortalPage
+
+

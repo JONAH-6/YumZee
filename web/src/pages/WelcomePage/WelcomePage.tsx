@@ -1,60 +1,45 @@
-import React, { useState } from 'react'
-
-import { navigate } from '@redwoodjs/router'
-
+import { navigate, routes } from '@redwoodjs/router'
 import { useAuth } from 'src/contexts/AuthContexts'
 
 const WelcomePage = () => {
   const { googleSignIn } = useAuth()
-  const [isSigningIn, setIsSigningIn] = useState(false)
 
   const handleGetStarted = async () => {
-    setIsSigningIn(true)
     try {
       await googleSignIn()
-      navigate('/', { replace: true })
     } catch (error) {
-      console.error('Sign in failed:', error)
-      setIsSigningIn(false)
+      console.error('Login error:', error)
     }
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#3E2679] px-4">
-      {/* Floating circular snack image */}
-      <div className="absolute top-20 h-32 w-32 overflow-hidden rounded-full border-4 border-white/20 shadow-2xl">
-        <img
-          src="https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400&h=400&fit=crop"
-          alt="Snacks"
-          className="h-full w-full object-cover"
-        />
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#3E2679] p-6 text-center">
+      <div className="mb-8 h-48 w-48 overflow-hidden rounded-full border-4 border-white/20">
+        <img src="/snacks.jpg" alt="Snacks" className="h-full w-full object-cover" />
       </div>
 
-      {/* Logo */}
-      <div className="mb-2 mt-40">
-        <h1 className="text-6xl font-extrabold tracking-tight">
-          <span className="text-[#FFC107]">YUM</span>
-          <span className="text-white">ZEE</span>
-        </h1>
-      </div>
+      <h1 className="text-4xl font-black tracking-tight">
+        <span className="text-[#FFC107]">YUM</span>
+        <span className="text-white">ZEE</span>
+      </h1>
+      <p className="mt-2 text-white/80">Good Food. Right Where You Need It.</p>
 
-      {/* Tagline */}
-      <p className="mb-8 text-lg text-white/80">
-        Good Food. Right Where You Need It.
-      </p>
-
-      {/* Giant Yellow Get Started button */}
       <button
         onClick={handleGetStarted}
-        disabled={isSigningIn}
-        className="rounded-full bg-[#FFC107] px-12 py-4 text-xl font-bold text-[#3E2679] shadow-lg transition-colors hover:bg-[#E5A925] disabled:opacity-60"
+        className="mt-8 w-full max-w-xs rounded-full bg-[#FFC107] py-4 text-lg font-bold text-black shadow-lg transition hover:bg-yellow-400"
       >
-        {isSigningIn ? 'Signing in...' : 'Get Started'}
+        Get Started
       </button>
 
-      {/* Footer */}
+      {/* Hidden Admin Link */}
       <p className="absolute bottom-6 text-xs text-white/50">
-        Powered by Yumzee Campus Logistics
+        Powered by Yumzee Campus Logistics{' '}
+        <button
+          onClick={() => navigate(routes.adminLogin())}
+          className="text-white/50 hover:text-white"
+        >
+          2026
+        </button>
       </p>
     </div>
   )

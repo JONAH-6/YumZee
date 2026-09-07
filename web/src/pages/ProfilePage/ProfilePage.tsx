@@ -1,12 +1,11 @@
-// web/src/pages/ProfilePage/ProfilePage.tsx - submission-grade
-import { useState } from 'react'
+// web/src/pages/ProfilePage/ProfilePage.tsx
+import { useState, useEffect } from 'react'
 import { Link, navigate, routes } from '@redwoodjs/router'
 import { Metadata } from '@redwoodjs/web'
 import {
   MapPin,
   Phone,
   Mail,
-  School,
   Building,
   Save,
   Check,
@@ -15,33 +14,19 @@ import {
   User as UserIcon,
   Loader2,
 } from 'lucide-react'
+import { doc, setDoc, getDoc } from 'firebase/firestore'
+import { db } from 'src/lib/firebase'
 import { useAuth } from 'src/contexts/AuthContexts'
 
 const ProfilePage = () => {
   const { user, logOut, isAuthenticated, loading } = useAuth()
   const [campus, setCampus] = useState('Lagos Mainland')
-  const [hostel, setHostel] = useState('12 Allen Avenue, Ikeja')
-  const [phone, setPhone] = useState('08012345678')
-  const [deliveryNotes, setDeliveryNotes] = useState('Please call when you arrive.')
+  const [hostel, setHostel] = useState('')
+  const [phone, setPhone] = useState('')
+  const [deliveryNotes, setDeliveryNotes] = useState('')
   const [isSaved, setIsSaved] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
-
-  const handleSave = (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSaved(true)
-    setTimeout(() => setIsSaved(false), 2500)
-  }
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true)
-    try {
-      await logOut()
-      navigate(routes.login(), { replace: true })
-    } catch (e) {
-      console.error('Logout failed', e)
-      setIsLoggingOut(false)
-    }
-  }
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false)
 
   const getDisplayName = () => {
     if (!user) return 'Guest'
@@ -50,7 +35,63 @@ const ProfilePage = () => {
     return 'Guest'
   }
 
-  if (loading) {
+  // Load the saved profile if it exists when the user logs in
+  useEffect(() => {
+    const loadProfile = async () => {
+      if (!user) return
+      setIsLoadingProfile(true)
+      try {
+        const docRef = doc(db, 'profiles', user.uid)
+        const docSnap = await getDoc(docRef)
+        if (docSnap.exists()) {
+          const data = docSnap.data()
+          if (data.campus) setCampus(data.campus)
+          if (data.hostel) setHostel(data.hostel)
+          if (data.phone) setPhone(data.phone)
+          if (data.deliveryNotes) setDeliveryNotes(data.deliveryNotes)
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error)
+      } finally {
+        setIsLoadingProfile(false)
+      }
+    }
+    loadProfile()
+  }, [user])
+
+  // Save profile to Firestore under the user's unique UID
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) return
+    try {
+      await setDoc(doc(db, 'profiles', user.uid), {
+        name: getDisplayName(),
+        email: user.email,
+        campus,
+        hostel,
+        phone,
+        deliveryNotes,
+        updatedAt: new Date().toISOString(),
+      })
+      setIsSaved(true)
+      setTimeout(() => setIsSaved(false), 2500)
+    } catch (error) {
+      console.error('Error saving profile:', error)
+    }
+  }
+
+  const handleLogout = async () => {
+    setIsLoggingOut(true)
+    try {
+      await logOut()
+      navigate('/', { replace: true })
+    } catch (e) {
+      console.error('Logout failed', e)
+      setIsLoggingOut(false)
+    }
+  }
+
+  if (loading || isLoadingProfile) {
     return (
       <div className="min-h-screen bg-[#FBF9FE] flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-[#4B2E83]" />
@@ -68,15 +109,12 @@ const ProfilePage = () => {
               <UserIcon className="h-8 w-8" />
             </div>
             <h1 className="mt-4 text-xl font-extrabold text-[#211F26]">You’re not logged in</h1>
-            <p className="mt-2 text-sm text-[#6F6B76]">Log in to save your delivery details and track your snack orders.</p>
+            <p className="mt-2 text-sm text-[#6F6B76]">Log in to save your delivery details.</p>
             <Link
-              to={routes.login()}
+              to={routes.home()}
               className="mt-6 inline-flex w-full items-center justify-center rounded-2xl bg-[#4B2E83] px-6 py-3 text-sm font-bold text-white shadow hover:bg-[#371F62] transition"
             >
-              Go to Login
-            </Link>
-            <Link to={routes.home()} className="mt-3 inline-block text-xs font-bold text-[#4B2E83] hover:underline">
-              ← Back to Home
+              Go to Home
             </Link>
           </div>
         </div>
