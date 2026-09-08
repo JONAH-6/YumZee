@@ -11,9 +11,14 @@ import OrdersPage from 'src/pages/OrdersPage/OrdersPage'
 import ProfilePage from 'src/pages/ProfilePage/ProfilePage'
 import NotFoundPage from 'src/pages/NotFoundPage/NotFoundPage'
 
-// NEW ADMIN IMPORTS
+// ADMIN IMPORTS
 import AdminLoginPage from 'src/pages/AdminLoginPage/AdminLoginPage'
 import AdminPortalPage from 'src/pages/AdminPortalPage/AdminPortalPage'
+import AdminOverviewPage from 'src/pages/AdminOverviewPage/AdminOverviewPage'
+import AdminOrdersPage from 'src/pages/AdminOrdersPage/AdminOrdersPage'
+import AdminProductsPage from 'src/pages/AdminProductsPage/AdminProductsPage'
+import AdminLoggedInUsersPage from 'src/pages/AdminLoggedInUsersPage/AdminLoggedInUsersPage'
+import AdminProfilesPage from 'src/pages/AdminProfilesPage/AdminProfilesPage'
 
 const Routes = () => {
   const { isAuthenticated } = useAuth()
@@ -33,9 +38,14 @@ const Routes = () => {
         <Route path="/" page={WelcomePage} name="welcome" />
       )}
 
-      {/* ADMIN ROUTES (Outside MainLayout so there is no mobile bottom nav) */}
+      {/* ADMIN ROUTES (Standalone pages so they don't have the mobile bottom nav) */}
       <Route path="/admin-login" page={AdminLoginPage} name="adminLogin" />
       <Route path="/admin" page={AdminPortalPage} name="admin" />
+      <Route path="/admin/overview" page={AdminOverviewPage} name="adminOverview" />
+      <Route path="/admin/orders" page={AdminOrdersPage} name="adminOrders" />
+      <Route path="/admin/products" page={AdminProductsPage} name="adminProducts" />
+      <Route path="/admin/users" page={AdminLoggedInUsersPage} name="adminLoggedInUsers" />
+      <Route path="/admin/profiles" page={AdminProfilesPage} name="adminProfiles" />
 
       <Route notfound page={NotFoundPage} />
     </Router>
