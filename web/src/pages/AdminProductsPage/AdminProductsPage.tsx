@@ -7,7 +7,7 @@ import { ArrowLeft, Package, Plus, Loader2, CheckCircle2 } from 'lucide-react'
 
 const AdminProductsPage = () => {
   const [products, setProducts] = useState<any[]>([])
-  const [newProduct, setNewProduct] = useState({ name: '', price: '', image: '', code: '', description: '', category: '' })
+  const [newProduct, setNewProduct] = useState({ name: '', price: '', image: '', code: '', description: '', category: 'Pastries' }) // Default to Pastries
   const [isAddingProduct, setIsAddingProduct] = useState(false)
   const [productSuccess, setProductSuccess] = useState(false)
 
@@ -25,7 +25,7 @@ const AdminProductsPage = () => {
     setIsAddingProduct(true)
     try {
       await addDoc(collection(db, 'products'), { ...newProduct, price: Number(newProduct.price), code: Number(newProduct.code), createdAt: serverTimestamp() })
-      setNewProduct({ name: '', price: '', image: '', code: '', description: '', category: '' })
+      setNewProduct({ name: '', price: '', image: '', code: '', description: '', category: 'Pastries' })
       setProductSuccess(true)
       setTimeout(() => setProductSuccess(false), 3000)
     } catch (error) {
@@ -85,7 +85,21 @@ const AdminProductsPage = () => {
               <input type="number" placeholder="Product Number (e.g., 16)" value={newProduct.code} onChange={(e) => setNewProduct({ ...newProduct, code: e.target.value })} required className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300" />
               <input type="number" placeholder="Price (₦)" value={newProduct.price} onChange={(e) => setNewProduct({ ...newProduct, price: e.target.value })} required className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300" />
               <input type="text" placeholder="IMGUR Image Link" value={newProduct.image} onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })} className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300" />
-              <input type="text" placeholder="Category (e.g., Snacks)" value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300" />
+
+              {/* 🔥 THE NEW DROPDOWN FOR CATEGORY */}
+              <select
+                value={newProduct.category}
+                onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })}
+                className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800"
+                required
+              >
+                <option value="Pastries">Pastries</option>
+                <option value="Savory Snacks">Savory Snacks</option>
+                <option value="Cakes & Desserts">Cakes & Desserts</option>
+                <option value="Drinks">Drinks</option>
+                <option value="Healthy Bites">Healthy Bites</option>
+              </select>
+
               <textarea placeholder="Full Description" value={newProduct.description} onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })} rows={3} className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800 placeholder-red-300" />
               <button type="submit" disabled={isAddingProduct} className="flex w-full items-center justify-center gap-2 rounded-lg bg-white py-3 text-sm font-black text-red-600 hover:bg-red-100 transition disabled:opacity-50">
                 {isAddingProduct ? <Loader2 className="h-5 w-5 animate-spin" /> : <Plus className="h-5 w-5" />}

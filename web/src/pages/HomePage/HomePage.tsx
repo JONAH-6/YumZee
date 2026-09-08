@@ -37,19 +37,18 @@ const HomePage = () => {
         id: doc.id,
         ...doc.data(),
       })) as Product[]
-
       data.sort((a, b) => a.code - b.code)
       setProducts(data)
       setLoading(false)
     })
-
     return () => unsubscribe()
   }, [])
 
+  // 🔥 FIX: Trims spaces and ignores capitalization
   const filteredProducts =
     selectedCategory === 'All Items'
       ? products
-      : products.filter((p) => p.category === selectedCategory)
+      : products.filter((p) => (p.category || '').trim().toLowerCase() === selectedCategory.toLowerCase())
 
   return (
     <div className="bg-[#FFF9E5] p-4">
