@@ -19,6 +19,7 @@ import AdminOrdersPage from 'src/pages/AdminOrdersPage/AdminOrdersPage'
 import AdminProductsPage from 'src/pages/AdminProductsPage/AdminProductsPage'
 import AdminLoggedInUsersPage from 'src/pages/AdminLoggedInUsersPage/AdminLoggedInUsersPage'
 import AdminProfilesPage from 'src/pages/AdminProfilesPage/AdminProfilesPage'
+import AdminHelpPage from 'src/pages/AdminHelpPage/AdminHelpPage'
 
 const Routes = () => {
   const { isAuthenticated } = useAuth()
@@ -38,7 +39,7 @@ const Routes = () => {
         <Route path="/" page={WelcomePage} name="welcome" />
       )}
 
-      {/* ADMIN ROUTES (Standalone pages so they don't have the mobile bottom nav) */}
+      {/* ADMIN ROUTES */}
       <Route path="/admin-login" page={AdminLoginPage} name="adminLogin" />
       <Route path="/admin" page={AdminPortalPage} name="admin" />
       <Route path="/admin/overview" page={AdminOverviewPage} name="adminOverview" />
@@ -46,6 +47,7 @@ const Routes = () => {
       <Route path="/admin/products" page={AdminProductsPage} name="adminProducts" />
       <Route path="/admin/users" page={AdminLoggedInUsersPage} name="adminLoggedInUsers" />
       <Route path="/admin/profiles" page={AdminProfilesPage} name="adminProfiles" />
+      <Route path="/admin/help" page={AdminHelpPage} name="adminHelp" />
 
       <Route notfound page={NotFoundPage} />
     </Router>

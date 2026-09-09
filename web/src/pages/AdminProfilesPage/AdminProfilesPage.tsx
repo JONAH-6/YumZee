@@ -3,7 +3,7 @@ import { Metadata } from '@redwoodjs/web'
 import { db } from 'src/lib/firebase'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Mail, MapPin, Phone, Clock } from 'lucide-react'
+import { ArrowLeft, Mail, MapPin, Phone, Clock, Flag, Watch, MessageCircle } from 'lucide-react'
 
 const AdminProfilesPage = () => {
   const [profiles, setProfiles] = useState<any[]>([])
@@ -41,37 +41,57 @@ const AdminProfilesPage = () => {
           {profiles.length === 0 ? (
             <p className="py-8 text-center text-gray-400">No profiles yet...</p>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {profiles.map((profile) => (
                 <div key={profile.id} className="rounded-xl border border-red-200 p-4">
-                  <div className="mb-3 flex items-center gap-3 border-b border-red-100 pb-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-xl font-black text-white">
+                  {/* Header */}
+                  <div className="flex items-center gap-3 border-b border-red-100 pb-3 mb-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-600 text-lg font-black text-white">
                       {profile.name?.[0]?.toUpperCase() || 'U'}
                     </div>
-                    <div>
-                      <p className="font-bold text-gray-800">{profile.name || 'Unknown'}</p>
-                      <p className="flex items-center gap-1 text-xs text-gray-500">
+                    <div className="min-w-0">
+                      <p className="font-bold text-gray-800 truncate">{profile.name || 'Unknown'}</p>
+                      <p className="flex items-center gap-1 text-xs text-gray-500 truncate">
                         <Mail className="h-3 w-3" /> {profile.email}
                       </p>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <p className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-red-500" /> Area: {profile.campus || 'Not set'}
+
+                  {/* Details - Compact Layout */}
+                  <div className="space-y-2 text-sm">
+                    <p className="flex items-center gap-2 text-gray-700">
+                      <MapPin className="h-4 w-4 text-red-500 shrink-0" />
+                      <span className="truncate">{profile.campus || 'No Area'}</span>
                     </p>
-                    <p className="flex items-center gap-2 text-sm text-gray-600">
-                      <MapPin className="h-4 w-4 text-red-500" /> Street: {profile.hostel || 'Not set'}
+                    <p className="flex items-center gap-2 text-gray-700">
+                      <MapPin className="h-4 w-4 text-red-500 shrink-0" />
+                      <span className="truncate">{profile.hostel || 'No Street'}</span>
                     </p>
-                    <p className="flex items-center gap-2 text-sm text-gray-600">
-                      <Phone className="h-4 w-4 text-red-500" /> Phone: {profile.phone || 'Not set'}
+                    <p className="flex items-center gap-2 text-gray-700">
+                      <Phone className="h-4 w-4 text-red-500 shrink-0" />
+                      <span className="truncate">{profile.phone || 'No Phone'}</span>
                     </p>
-                    <p className="flex items-center gap-2 text-sm text-gray-600">
-                      <Mail className="h-4 w-4 text-red-500" /> Notes: {profile.deliveryNotes || 'No Notes'}
+                    <p className="flex items-center gap-2 text-gray-700">
+                      <Flag className="h-4 w-4 text-red-500 shrink-0" />
+                      <span className="truncate">{profile.landmark || 'No Landmark'}</span>
                     </p>
-                    <p className="flex items-center gap-2 text-xs text-gray-400">
-                      <Clock className="h-3 w-3" /> Updated: {formatDate(profile.updatedAt)}
+                    <p className="flex items-center gap-2 text-gray-700">
+                      <Watch className="h-4 w-4 text-red-500 shrink-0" />
+                      <span className="truncate">{profile.deliveryTime || 'No Time'}</span>
+                    </p>
+                    <p className="flex items-center gap-2 text-gray-700">
+                      <MessageCircle className="h-4 w-4 text-red-500 shrink-0" />
+                      <span className="truncate">{profile.whatsapp ? `+234${profile.whatsapp}` : 'No WhatsApp'}</span>
+                    </p>
+                    <p className="flex items-start gap-2 text-gray-600 border-t border-red-100 pt-2">
+                      <MapPin className="h-4 w-4 text-red-500 shrink-0 mt-0.5" />
+                      <span className="line-clamp-2">{profile.deliveryNotes || 'No Notes'}</span>
                     </p>
                   </div>
+
+                  <p className="mt-3 flex items-center gap-2 text-xs text-gray-400 border-t border-red-100 pt-2">
+                    <Clock className="h-3 w-3" /> Updated: {formatDate(profile.updatedAt)}
+                  </p>
                 </div>
               ))}
             </div>

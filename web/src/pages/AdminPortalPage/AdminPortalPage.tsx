@@ -2,12 +2,7 @@ import { useState, useEffect } from 'react'
 import { navigate, routes } from '@redwoodjs/router'
 import { Metadata } from '@redwoodjs/web'
 import {
-  LayoutDashboard,
-  ShoppingBag,
-  Package,
-  Users,
-  LogOut,
-  UserCircle,
+  LayoutDashboard, ShoppingBag, Package, Users, LogOut, UserCircle, HelpCircle,
 } from 'lucide-react'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from 'src/lib/firebase'
@@ -29,7 +24,6 @@ const AdminPortalPage = () => {
   return (
     <div className="min-h-screen bg-red-50">
       <Metadata title="Admin Portal" description="YumZee Admin" />
-
       <header className="bg-red-600 text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
@@ -89,6 +83,15 @@ const AdminPortalPage = () => {
             <div>
               <p className="text-xl font-black text-gray-800">Profiles ({profiles})</p>
               <p className="text-sm text-gray-500">Complete user details & notes</p>
+            </div>
+          </button>
+
+          {/* Help Button */}
+          <button onClick={() => navigate(routes.adminHelp())} className="flex flex-col items-start gap-4 rounded-2xl border border-red-200 bg-white p-6 text-left transition hover:border-red-500 hover:bg-red-50">
+            <HelpCircle className="h-10 w-10 text-red-600" />
+            <div>
+              <p className="text-xl font-black text-gray-800">Help Requests</p>
+              <p className="text-sm text-gray-500">See user complaints & issues</p>
             </div>
           </button>
         </div>
