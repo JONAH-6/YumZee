@@ -63,11 +63,9 @@ const BasketPage = () => {
         groupCode: inviteCode,
         createdAt: serverTimestamp(),
       })
-      // NO ALERT HERE - Just go to the Orders page
       navigate('/orders')
     } catch (error) {
       console.error('Error placing order:', error)
-      // NO ALERT HERE - Just show a console error
     } finally {
       setIsPlacingOrder(false)
     }
@@ -85,24 +83,25 @@ const BasketPage = () => {
       <div className="p-4">
         <div className="space-y-3">
           {cart.length === 0 ? (
-            <div className="rounded-2xl bg-white p-6 text-center shadow-sm">
+            <div className="rounded-2xl bg-white p-6 text-center">
               <p className="text-sm text-[#6F6B76]">Your basket is empty.</p>
               <Link to={routes.home()} className="mt-4 inline-block rounded-full bg-[#FFC107] px-6 py-2 text-sm font-bold text-black">Browse Snacks</Link>
             </div>
           ) : (
             cart.map((item) => (
-              <div key={item.id} className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-sm">
-                <img src={item.image} alt={item.name} className="h-16 w-16 rounded-xl object-cover" />
-                <div className="flex-1">
-                  <h3 className="text-sm font-bold">#{item.id} {item.name}</h3>
-                  <p className="text-xs text-[#6F6B76]">Qty {item.quantity}</p>
+              <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-white p-4">
+                <img src={item.image} alt={item.name} className="h-24 w-24 rounded-xl object-contain bg-[#FFC107]" />
+                <div className="flex-1 min-w-0">
+                  {/* Reduced size + truncate to prevent stretching */}
+                  <h3 className="text-sm font-bold truncate">#{item.id} {item.name}</h3>
+                  <p className="text-[11px] text-[#6F6B76] mt-0.5">Qty {item.quantity}</p>
                   <p className="mt-1 text-sm font-bold text-[#3E2679]">₦{(item.price * item.quantity).toLocaleString()}</p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => updateQuantity(item.id, -1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">−</button>
+                    <button onClick={() => updateQuantity(item.id, -1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">−</button>
                     <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, 1)} className="flex h-7 w-7 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">+</button>
+                    <button onClick={() => updateQuantity(item.id, 1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">+</button>
                   </div>
                   <button onClick={() => removeFromCart(item.id)} className="rounded-md p-1 text-[#A09BA8] transition hover:text-red-500">
                     <Trash2 className="h-4 w-4" />
@@ -114,7 +113,7 @@ const BasketPage = () => {
         </div>
 
         {cart.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4 shadow-sm">
+          <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4">
             {isGroupActive ? (
               <div className="text-center">
                 <span className="text-sm font-bold text-[#3E2679]">Group Order Active (30% Delivery Discount)</span>
@@ -132,7 +131,7 @@ const BasketPage = () => {
         )}
 
         {cart.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5 shadow-sm">
+          <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5">
             <div className="flex justify-between text-sm mb-2">
               <span className="text-[#6F6B76]">Basket Subtotal</span>
               <span className="font-bold">₦{totalPrice.toLocaleString()}</span>
@@ -148,8 +147,8 @@ const BasketPage = () => {
           </div>
         )}
 
-               {cart.length > 0 && (
-          <button onClick={handlePlaceOrder} disabled={isPlacingOrder} className="mt-6 w-full rounded-full bg-[#FFC107] py-4 text-base font-black text-black shadow-lg disabled:opacity-50">
+        {cart.length > 0 && (
+          <button onClick={handlePlaceOrder} disabled={isPlacingOrder} className="mt-6 w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black disabled:opacity-50">
             {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
           </button>
         )}
@@ -157,7 +156,7 @@ const BasketPage = () => {
 
       {isGroupModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
+          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6">
             <button onClick={() => setIsGroupModalOpen(false)} className="absolute right-3 top-3 text-gray-500"><X className="h-5 w-5" /></button>
             <h2 className="text-lg font-bold text-[#211F26] mb-4">Group Order</h2>
             <div className="space-y-4">

@@ -57,12 +57,16 @@ const ProductDetailPage = ({ id }) => {
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-[#FFF9E5] font-sans text-[#211F26]">
-      {/* Top Image with Back Button */}
+      {/* Top Image with Back Button - YELLOW BACKGROUND */}
       <div className="relative">
         <Link to={routes.home()} className="absolute left-4 top-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-black/50 text-white">
           <ChevronLeft className="h-6 w-6" />
         </Link>
-        <img src={product.image || 'https://via.placeholder.com/400x300'} alt={product.name} className="h-64 w-full object-cover" />
+        <img
+          src={product.image || 'https://via.placeholder.com/400x300'}
+          alt={product.name}
+          className="h-96 w-full object-contain bg-[#FFC107]"
+        />
       </div>
 
       {/* Title and Price */}
@@ -112,7 +116,7 @@ const ProductDetailPage = ({ id }) => {
           <div className="space-y-3">
             {drinks.map((drink) => (
               <div key={drink.id} className="flex items-center gap-3 rounded-xl border border-[#E9E5EE] p-2">
-                <img src={drink.image} alt={drink.name} className="h-12 w-12 rounded-lg object-cover" />
+                <img src={drink.image} alt={drink.name} className="h-12 w-12 rounded-lg object-cover bg-[#FFC107]" />
                 <div className="flex-1">
                   <p className="text-sm font-bold">{drink.name}</p>
                   <p className="text-xs text-[#3E2679]">₦{drink.price.toLocaleString()}</p>
@@ -129,9 +133,9 @@ const ProductDetailPage = ({ id }) => {
         </div>
       )}
 
-      {/* Large Yellow Add to Cart Button at Bottom */}
+      {/* Large Yellow Add to Cart Button at Bottom (No shadow!) */}
       <div className="p-4 pb-8">
-        <button onClick={handleAddToCart} className="w-full rounded-full bg-[#FFC107] py-4 text-lg font-black text-[#211F26] shadow-lg">
+        <button onClick={handleAddToCart} className="w-full rounded-full bg-[#FFC107] py-4 text-lg font-black text-[#211F26]">
           Add to Cart — ₦{totalPrice.toLocaleString()}
         </button>
       </div>
