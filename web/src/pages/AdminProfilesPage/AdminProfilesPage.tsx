@@ -13,7 +13,8 @@ const AdminProfilesPage = () => {
   useEffect(() => {
     const unsubProfiles = onSnapshot(collection(db, 'profiles'), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-      setProfiles(data)
+      // SORT: Newest first so recent users appear at the top
+      setProfiles(data.sort((a: any, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0)))
     })
     return () => unsubProfiles()
   }, [])
@@ -44,7 +45,7 @@ const AdminProfilesPage = () => {
             <p className="py-8 text-center text-gray-400">No profiles yet...</p>
           ) : (
             <div className="min-w-[1000px]">
-              {/* Header Row - 10 Columns */}
+              {/* Header Row */}
               <div className="grid grid-cols-10 gap-2 border-b border-red-200 bg-red-50 px-4 py-3 text-[11px] font-black uppercase tracking-wider text-red-600">
                 <div className="col-span-2">Name / Email</div>
                 <div>Phone</div>
@@ -57,7 +58,7 @@ const AdminProfilesPage = () => {
                 <div className="text-center">Action</div>
               </div>
 
-              {/* Data Rows - 10 Columns */}
+              {/* Data Rows */}
               {profiles.map((profile) => (
                 <div key={profile.id} className="grid grid-cols-10 gap-2 border-b border-red-100 px-4 py-3 text-sm items-center hover:bg-red-50/50">
                   <div className="col-span-2 min-w-0">
@@ -74,12 +75,10 @@ const AdminProfilesPage = () => {
                   <div className="truncate text-gray-700">{profile.deliveryTime || 'No'}</div>
                   <div className="truncate text-gray-700">{profile.whatsapp ? `+234${profile.whatsapp}` : 'No'}</div>
 
-                  {/* Added Delivery Note - Showing first 20 characters */}
                   <div className="truncate text-gray-700">
                     {profile.deliveryNotes ? profile.deliveryNotes.slice(0, 20) + '...' : 'No'}
                   </div>
 
-                  {/* 3-Dot Menu */}
                   <div className="relative flex justify-center">
                     <button
                       onClick={() => setOpenMenuId(openMenuId === profile.id ? null : profile.id)}
