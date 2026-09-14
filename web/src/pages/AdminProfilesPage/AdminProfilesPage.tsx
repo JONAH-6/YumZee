@@ -13,8 +13,15 @@ const AdminProfilesPage = () => {
   useEffect(() => {
     const unsubProfiles = onSnapshot(collection(db, 'profiles'), (snapshot) => {
       const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-      // SORT: Newest first so recent users appear at the top
-      setProfiles(data.sort((a: any, b: any) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0)))
+
+      // 🔥 THE FIX: Sorts by ISO string date correctly (Newest First)
+      const sortedData = data.sort((a: any, b: any) => {
+        const dateA = new Date(a.updatedAt || 0).getTime()
+        const dateB = new Date(b.updatedAt || 0).getTime()
+        return dateB - dateA
+      })
+
+      setProfiles(sortedData)
     })
     return () => unsubProfiles()
   }, [])

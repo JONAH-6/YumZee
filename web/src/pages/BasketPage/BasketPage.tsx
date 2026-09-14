@@ -4,7 +4,7 @@ import { useCart } from 'src/components/CartContext/CartContext'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
 import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
 import { Trash2, ChevronLeft, Users, X } from 'lucide-react'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
 import { db } from 'src/lib/firebase'
 import { useAuth } from 'src/contexts/AuthContexts'
 
@@ -46,9 +46,23 @@ const BasketPage = () => {
     if (cart.length === 0) return
     setIsPlacingOrder(true)
     try {
+      // 🔥 Fetch user's phone from their Profile
+      let userPhone = ''
+      if (user?.uid) {
+        try {
+          const profileDoc = await getDoc(doc(db, 'profiles', user.uid))
+          if (profileDoc.exists()) {
+            userPhone = profileDoc.data().phone || ''
+          }
+        } catch (err) {
+          console.error('Could not load phone from profile:', err)
+        }
+      }
+
       await addDoc(collection(db, 'orders'), {
         customerName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
         customerEmail: user?.email || '',
+        customerPhone: userPhone, // 🔥 NEW
         items: cart.map((item) => ({
           id: item.id,
           name: item.name,
@@ -61,6 +75,7 @@ const BasketPage = () => {
         total: total,
         groupActive: isGroupActive,
         groupCode: inviteCode,
+        isCompleted: false, // 🔥 NEW - Shows in "Orders" tab, not "Completed"
         createdAt: serverTimestamp(),
       })
       navigate('/orders')
@@ -92,7 +107,6 @@ const BasketPage = () => {
               <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-white p-4">
                 <img src={item.image} alt={item.name} className="h-24 w-24 rounded-xl object-contain bg-[#FFC107]" />
                 <div className="flex-1 min-w-0">
-                  {/* Reduced size + truncate to prevent stretching */}
                   <h3 className="text-sm font-bold truncate">#{item.id} {item.name}</h3>
                   <p className="text-[11px] text-[#6F6B76] mt-0.5">Qty {item.quantity}</p>
                   <p className="mt-1 text-sm font-bold text-[#3E2679]">₦{(item.price * item.quantity).toLocaleString()}</p>
