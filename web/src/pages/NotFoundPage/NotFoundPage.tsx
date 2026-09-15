@@ -18,7 +18,7 @@ export default () => (
                 height: 100vh;
               }
               section {
-                background-color: white;
+                background-color:rgba(0, 0, 0, 0.1);
                 border-radius: 0.25rem;
                 width: 32rem;
                 padding: 1rem;
@@ -37,7 +37,8 @@ export default () => (
     />
     <section>
       <h1>
-        <span>404 Page Not Found</span>
+        <span>Not Exist On <span className="text-[#FFC107]">YUM</span>
+              <span className="text-white">ZEE</span></span>
       </h1>
     </section>
   </main>
