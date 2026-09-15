@@ -138,13 +138,20 @@ const ProfilePage = () => {
     <div className="min-h-screen bg-[#FBF9FE] font-sans">
       <Metadata title="My Profile" description="Manage your delivery details" />
       <div className="relative bg-white px-6 pb-10 pt-10 border-b border-[#E9E5EE]">
-        <div className="mx-auto flex max-w-3xl items-center gap-4">
+        <div className="mx-auto flex max-w-3xl items-center gap-3">
           {user.photoURL ? <img src={user.photoURL} alt="Avatar" className="h-14 w-14 rounded-full border border-[#E9E5EE] object-cover" /> : <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#4B2E83] text-xl font-black text-white">{getDisplayName()[0]?.toUpperCase() ?? 'U'}</div>}
-          <div className="flex-1">
-            <h2 className="text-xl font-extrabold text-[#211F26]">{getDisplayName()}</h2>
-            <p className="flex items-center gap-1.5 text-sm font-medium text-[#6F6B76]"><Mail className="h-4 w-4 text-[#A09BA8]" /> {user.email}</p>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl font-extrabold text-[#211F26]">{getDisplayName()}</h2>
+              {/* 🔥 FIXED: Verified badge now shows on mobile too */}
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-700">
+                <ShieldCheck className="h-3.5 w-3.5" /> Verified
+              </span>
+            </div>
+            <p className="flex items-center gap-1.5 text-sm font-medium text-[#6F6B76] truncate">
+              <Mail className="h-4 w-4 text-[#A09BA8] shrink-0" /> {user.email}
+            </p>
           </div>
-          <span className="hidden sm:inline-flex items-center gap-1 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-[11px] font-bold text-emerald-700"><ShieldCheck className="h-3.5 w-3.5" /> Verified</span>
         </div>
       </div>
 
