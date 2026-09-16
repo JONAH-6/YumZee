@@ -13,58 +13,48 @@ const WelcomePage = () => {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col items-center justify-between bg-[#3E2679] p-8 text-center">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#3E2679] px-8 text-center">
 
-      {/* Top Spacer for centering */}
-      <div className="flex-1" />
+      {/* Video - wider now */}
+      <video
+        src="/f838bb38b0f04fe18b31bfc18a88b80b.webm"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="mb-2 h-64 w-80 object-contain"
+        style={{ mixBlendMode: 'multiply' }}
+      />
 
-      {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center">
-        {/* 🎬 VIDEO instead of image */}
-       <video
-          src="f838bb38b0f04fe18b31bfc18a88b80b.webm"
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="mb-6 h-56 w-56 object-contain"
-          style={{ mixBlendMode: 'multiply' }}
-        />
+      {/* Brand Name */}
+      <h1 className="text-5xl font-black tracking-tight">
+        <span className="text-[#FFC107]">YUM</span>
+        <span className="text-white">ZEE</span>
+      </h1>
 
-        {/* Brand Name */}
-        <h1 className="text-5xl font-black tracking-tight">
-          <span className="text-[#FFC107]">YUM</span>
-          <span className="text-white">ZEE</span>
-        </h1>
+      {/* Tagline */}
+      <p className="mt-2 text-sm font-light tracking-wide text-white/70">
+        Snacks delivered fast.
+      </p>
 
-        {/* Tagline */}
-        <p className="mt-3 text-sm font-light tracking-wide text-white/70">
-          Snacks delivered fast.
-        </p>
-      </div>
+      {/* Get Started Button */}
+      <button
+        onClick={handleGetStarted}
+        className="mt-10 w-full max-w-xs rounded-full bg-[#FFC107] py-4 text-base font-bold text-[#3E2679] transition hover:bg-[#FFD54F] active:scale-95"
+      >
+        Get Started
+      </button>
 
-      {/* Bottom Section */}
-      <div className="relative z-10 w-full max-w-xs flex-1 flex flex-col justify-end">
-
-        {/* Get Started Button */}
+      {/* Hidden Admin Link */}
+      <p className="absolute bottom-6 text-[10px] tracking-wider text-white/30">
+        Powered by Yumzee Logistics{' '}
         <button
-          onClick={handleGetStarted}
-          className="w-full rounded-full bg-[#FFC107] py-4 text-base font-bold text-[#3E2679] transition hover:bg-[#FFD54F] active:scale-95"
+          onClick={() => navigate(routes.adminLogin())}
+          className="text-white/30 hover:text-white/60"
         >
-          Get Started
+          2026
         </button>
-
-        {/* Hidden Admin Link */}
-        <p className="mt-8 text-[10px] tracking-wider text-white/30">
-          Powered by Yumzee Logistics{' '}
-          <button
-            onClick={() => navigate(routes.adminLogin())}
-            className="text-white/30 hover:text-white/60"
-          >
-            2026
-          </button>
-        </p>
-      </div>
+      </p>
     </div>
   )
 }
