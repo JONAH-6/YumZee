@@ -13,34 +13,54 @@ const WelcomePage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#3E2679] p-6 text-center">
-      <div className="mb-8 h-48 w-48 overflow-hidden rounded-full border-4 border-white/20">
-        <img src="/snacks.jpg" alt="Snacks" className="h-full w-full object-cover" />
+    <div className="relative flex min-h-screen flex-col items-center justify-between bg-[#3E2679] p-8 text-center">
+
+      {/* Top Spacer for centering */}
+      <div className="flex-1" />
+
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col items-center">
+        {/* Logo Image */}
+        <img
+          src="/welcome-image1-bgrover.png"
+          alt="YumZee"
+          className="mb-6 h-56 w-56 object-contain"
+        />
+
+        {/* Brand Name */}
+        <h1 className="text-5xl font-black tracking-tight">
+          <span className="text-[#FFC107]">YUM</span>
+          <span className="text-white">ZEE</span>
+        </h1>
+
+        {/* Tagline */}
+        <p className="mt-3 text-sm font-light tracking-wide text-white/70">
+          Snacks delivered fast.
+        </p>
       </div>
 
-      <h1 className="text-4xl font-black tracking-tight">
-        <span className="text-[#FFC107]">YUM</span>
-        <span className="text-white">ZEE</span>
-      </h1>
-      <p className="mt-2 text-white/80">Good Food. Right Where You Need It.</p>
+      {/* Bottom Section */}
+      <div className="relative z-10 w-full max-w-xs flex-1 flex flex-col justify-end">
 
-      <button
-        onClick={handleGetStarted}
-        className="mt-8 w-full max-w-xs rounded-full bg-[#FFC107] py-4 text-lg font-bold text-black shadow-lg transition hover:bg-yellow-400"
-      >
-        Get Started
-      </button>
-
-      {/* Hidden Admin Link */}
-      <p className="absolute bottom-6 text-xs text-white/50">
-        Powered by Yumzee Campus Logistics{' '}
+        {/* Get Started Button */}
         <button
-          onClick={() => navigate(routes.adminLogin())}
-          className="text-white/50 hover:text-white"
+          onClick={handleGetStarted}
+          className="w-full rounded-full bg-[#FFC107] py-4 text-base font-bold text-[#3E2679] transition hover:bg-[#FFD54F] active:scale-95"
         >
-          2026
+          Get Started
         </button>
-      </p>
+
+        {/* Hidden Admin Link */}
+        <p className="mt-8 text-[10px] tracking-wider text-white/30">
+          Powered by Yumzee Logistics{' '}
+          <button
+            onClick={() => navigate(routes.adminLogin())}
+            className="text-white/30 hover:text-white/60"
+          >
+            2026
+          </button>
+        </p>
+      </div>
     </div>
   )
 }
