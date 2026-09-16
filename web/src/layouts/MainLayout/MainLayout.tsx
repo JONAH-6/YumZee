@@ -26,33 +26,34 @@ const MainLayout = ({ children }) => {
     else setShowFloatingCart(false)
   }, [itemCount])
 
-  // 🔔 PUSH NOTIFICATIONS: Ask permission & save FCM token to Firestore
+  // 🔔 PUSH NOTIFICATIONS
   useEffect(() => {
     const registerNotifications = async () => {
       if (!user || !auth.app) return
 
       try {
-        // Check if the browser supports notifications
         if (!('Notification' in window)) {
           console.log('This browser does not support notifications.')
           return
         }
 
-        // Ask for permission
         const permission = await Notification.requestPermission()
         if (permission !== 'granted') {
           console.log('Notification permission denied.')
           return
         }
 
-        // Get the FCM token
+        // 🔥 NEW: Register the service worker FIRST
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
+        await navigator.serviceWorker.ready
+
         const messaging = getMessaging(auth.app)
         const token = await getToken(messaging, {
           vapidKey: 'BD-fZWCWryu2DImjsZA8332CQyLVSD_JdkzB9mBoOnStNry4qH2fH5pAampvXJWdJtvwIjFgo0-9ofL2jgD2-10',
+          serviceWorkerRegistration: registration, // 🔥 Pass it here
         })
 
         if (token) {
-          // Save the token to the user's profile in Firestore
           await updateDoc(doc(db, 'profiles', user.uid), {
             fcmToken: token,
           })
@@ -65,7 +66,6 @@ const MainLayout = ({ children }) => {
       }
     }
 
-    // Delay a bit so it doesn't block page load
     const timer = setTimeout(registerNotifications, 3000)
     return () => clearTimeout(timer)
   }, [user])
@@ -149,10 +149,6 @@ const MainLayout = ({ children }) => {
           )}
         </button>
       </div>
-
-
-
-
     </div>
   )
 }
