@@ -20,11 +20,15 @@ const WelcomePage = () => {
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center">
-        {/* Logo Image */}
-        <img
-          src="/welcome-image1-bgrover.png"
-          alt="YumZee"
+        {/* 🎬 VIDEO instead of image */}
+       <video
+          src="f838bb38b0f04fe18b31bfc18a88b80b.webm"
+          autoPlay
+          loop
+          muted
+          playsInline
           className="mb-6 h-56 w-56 object-contain"
+          style={{ mixBlendMode: 'multiply' }}
         />
 
         {/* Brand Name */}
