@@ -3,10 +3,13 @@ import { ShoppingCart, User, LogOut, Home, Search, ShoppingBag } from 'lucide-re
 import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { useAuth } from 'src/contexts/AuthContexts'
+import { getMessaging, getToken } from 'firebase/messaging'
+import { auth, db } from 'src/lib/firebase'
+import { doc, updateDoc } from 'firebase/firestore'
 
 const MainLayout = ({ children }) => {
   const { itemCount } = useCart()
-  const { logOut } = useAuth()
+  const { user, logOut } = useAuth()
 
   const [showFloatingCart, setShowFloatingCart] = useState(false)
   const [pos, setPos] = useState({ x: 16, y: 0 })
@@ -22,6 +25,50 @@ const MainLayout = ({ children }) => {
     if (itemCount > 0) setShowFloatingCart(true)
     else setShowFloatingCart(false)
   }, [itemCount])
+
+  // 🔔 PUSH NOTIFICATIONS: Ask permission & save FCM token to Firestore
+  useEffect(() => {
+    const registerNotifications = async () => {
+      if (!user || !auth.app) return
+
+      try {
+        // Check if the browser supports notifications
+        if (!('Notification' in window)) {
+          console.log('This browser does not support notifications.')
+          return
+        }
+
+        // Ask for permission
+        const permission = await Notification.requestPermission()
+        if (permission !== 'granted') {
+          console.log('Notification permission denied.')
+          return
+        }
+
+        // Get the FCM token
+        const messaging = getMessaging(auth.app)
+        const token = await getToken(messaging, {
+          vapidKey: 'BD-fZWCWryu2DImjsZA8332CQyLVSD_JdkzB9mBoOnStNry4qH2fH5pAampvXJWdJtvwIjFgo0-9ofL2jgD2-10',
+        })
+
+        if (token) {
+          // Save the token to the user's profile in Firestore
+          await updateDoc(doc(db, 'profiles', user.uid), {
+            fcmToken: token,
+          })
+          console.log('✅ FCM Token saved:', token)
+        } else {
+          console.log('No FCM token available.')
+        }
+      } catch (err) {
+        console.error('Notification setup error:', err)
+      }
+    }
+
+    // Delay a bit so it doesn't block page load
+    const timer = setTimeout(registerNotifications, 3000)
+    return () => clearTimeout(timer)
+  }, [user])
 
   const onPointerDown = (e: React.PointerEvent) => {
     dragging.current = true
@@ -102,7 +149,12 @@ const MainLayout = ({ children }) => {
           )}
         </button>
       </div>
+
+
+
+
     </div>
   )
 }
+
 export default MainLayout
