@@ -29,11 +29,15 @@ const MainLayout = ({ children }) => {
   // 🔔 PUSH NOTIFICATIONS
   useEffect(() => {
     const registerNotifications = async () => {
-      if (!user || !auth.app) return
+      // 🔥 CRITICAL: Wait for Firebase Auth to be fully ready
+      if (!user || !auth.currentUser) {
+        console.log('⏳ Waiting for auth to be ready...')
+        return
+      }
 
       try {
         if (!('Notification' in window)) {
-          console.log('This browser does not support notifications.')
+          console.log('Browser does not support notifications.')
           return
         }
 
@@ -43,14 +47,14 @@ const MainLayout = ({ children }) => {
           return
         }
 
-        // 🔥 NEW: Register the service worker FIRST
+        // Register the service worker
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
         await navigator.serviceWorker.ready
 
         const messaging = getMessaging(auth.app)
         const token = await getToken(messaging, {
           vapidKey: 'BD-fZWCWryu2DImjsZA8332CQyLVSD_JdkzB9mBoOnStNry4qH2fH5pAampvXJWdJtvwIjFgo0-9ofL2jgD2-10',
-          serviceWorkerRegistration: registration, // 🔥 Pass it here
+          serviceWorkerRegistration: registration,
         })
 
         if (token) {
@@ -66,7 +70,8 @@ const MainLayout = ({ children }) => {
       }
     }
 
-    const timer = setTimeout(registerNotifications, 3000)
+    // Wait 5 seconds to ensure auth is fully loaded
+    const timer = setTimeout(registerNotifications, 5000)
     return () => clearTimeout(timer)
   }, [user])
 
