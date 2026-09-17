@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { navigate, routes } from '@redwoodjs/router'
 import { Metadata } from '@redwoodjs/web'
 import {
-  LayoutDashboard, ShoppingBag, Package, Users, LogOut, UserCircle, HelpCircle,
+  LayoutDashboard, ShoppingBag, Package, Users, LogOut, UserCircle, HelpCircle, Bell,
 } from 'lucide-react'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { db } from 'src/lib/firebase'
@@ -92,6 +92,15 @@ const AdminPortalPage = () => {
             <div>
               <p className="text-xl font-black text-gray-800">Help Requests</p>
               <p className="text-sm text-gray-500">See user complaints & issues</p>
+            </div>
+          </button>
+
+          {/* 🔔 Notifications Button */}
+          <button onClick={() => navigate(routes.adminNotifications())} className="flex flex-col items-start gap-4 rounded-2xl border border-red-200 bg-white p-6 text-left transition hover:border-red-500 hover:bg-red-50">
+            <Bell className="h-10 w-10 text-red-600" />
+            <div>
+              <p className="text-xl font-black text-gray-800">Notifications</p>
+              <p className="text-sm text-gray-500">Send messages to all users</p>
             </div>
           </button>
         </div>

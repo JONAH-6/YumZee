@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { ShoppingCart, User, LogOut, Home, Search, ShoppingBag } from 'lucide-react'
+import { ShoppingCart, User, LogOut, Home, Search, ShoppingBag, Bell } from 'lucide-react'
 import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { useAuth } from 'src/contexts/AuthContexts'
-import { getMessaging, getToken } from 'firebase/messaging'
-import { auth, db } from 'src/lib/firebase'
-import { doc, updateDoc } from 'firebase/firestore'
+import { db } from 'src/lib/firebase'
+import { collection, doc, onSnapshot } from 'firebase/firestore'
 
 const MainLayout = ({ children }) => {
   const { itemCount } = useCart()
@@ -13,6 +12,8 @@ const MainLayout = ({ children }) => {
 
   const [showFloatingCart, setShowFloatingCart] = useState(false)
   const [pos, setPos] = useState({ x: 16, y: 0 })
+  const [totalNotifs, setTotalNotifs] = useState(0)
+  const [readCount, setReadCount] = useState(0)
   const dragging = useRef(false)
   const offset = useRef({ x: 0, y: 0 })
   const didDrag = useRef(false)
@@ -26,54 +27,28 @@ const MainLayout = ({ children }) => {
     else setShowFloatingCart(false)
   }, [itemCount])
 
-  // 🔔 PUSH NOTIFICATIONS
+  // Count total notifications
   useEffect(() => {
-    const registerNotifications = async () => {
-      // 🔥 CRITICAL: Wait for Firebase Auth to be fully ready
-      if (!user || !auth.currentUser) {
-        console.log('⏳ Waiting for auth to be ready...')
-        return
-      }
+    const unsub = onSnapshot(collection(db, 'notifications'), (snap) => {
+      setTotalNotifs(snap.size)
+    })
+    return () => unsub()
+  }, [])
 
-      try {
-        if (!('Notification' in window)) {
-          console.log('Browser does not support notifications.')
-          return
-        }
-
-        const permission = await Notification.requestPermission()
-        if (permission !== 'granted') {
-          console.log('Notification permission denied.')
-          return
-        }
-
-        // Register the service worker
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        await navigator.serviceWorker.ready
-
-        const messaging = getMessaging(auth.app)
-        const token = await getToken(messaging, {
-          vapidKey: 'BD-fZWCWryu2DImjsZA8332CQyLVSD_JdkzB9mBoOnStNry4qH2fH5pAampvXJWdJtvwIjFgo0-9ofL2jgD2-10',
-          serviceWorkerRegistration: registration,
-        })
-
-        if (token) {
-          await updateDoc(doc(db, 'profiles', user.uid), {
-            fcmToken: token,
-          })
-          console.log('✅ FCM Token saved:', token)
-        } else {
-          console.log('No FCM token available.')
-        }
-      } catch (err) {
-        console.error('Notification setup error:', err)
-      }
+  // Count how many user has read
+  useEffect(() => {
+    if (!user?.uid) {
+      setReadCount(0)
+      return
     }
-
-    // Wait 5 seconds to ensure auth is fully loaded
-    const timer = setTimeout(registerNotifications, 5000)
-    return () => clearTimeout(timer)
+    const unsub = onSnapshot(doc(db, 'profiles', user.uid), (snap) => {
+      const readIds = snap.data()?.readNotifications || []
+      setReadCount(readIds.length)
+    })
+    return () => unsub()
   }, [user])
+
+  const unreadCount = Math.max(0, totalNotifs - readCount)
 
   const onPointerDown = (e: React.PointerEvent) => {
     dragging.current = true
@@ -113,10 +88,20 @@ const MainLayout = ({ children }) => {
               <span className="text-white">ZEE</span>
             </span>
           </Link>
-          <Link to={routes.basket()} className="relative rounded-full bg-white/20 p-2">
-            <ShoppingCart className="h-5 w-5 text-white" />
-            {itemCount > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-[#FFC107] px-1 text-[10px] text-black">{itemCount}</span>}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link to={routes.notifications()} className="relative rounded-full bg-white/20 p-2">
+              <Bell className="h-5 w-5 text-white" />
+              {unreadCount > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
+            <Link to={routes.basket()} className="relative rounded-full bg-white/20 p-2">
+              <ShoppingCart className="h-5 w-5 text-white" />
+              {itemCount > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-[#FFC107] px-1 text-[10px] text-black">{itemCount}</span>}
+            </Link>
+          </div>
         </div>
       </header>
       <main className="pb-20">{children}</main>
@@ -132,7 +117,7 @@ const MainLayout = ({ children }) => {
         </nav>
       </div>
 
-      {/* Draggable Floating Cart Button */}
+      {/* Draggable Floating Cart */}
       <div
         className={`fixed z-50 transition-all duration-500 ease-out ${
           showFloatingCart ? 'translate-x-0 opacity-100' : '-translate-x-24 opacity-0 pointer-events-none'

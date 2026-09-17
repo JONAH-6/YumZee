@@ -9,6 +9,7 @@ import ProductDetailPage from 'src/pages/ProductDetailPage/ProductDetailPage'
 import BasketPage from 'src/pages/BasketPage/BasketPage'
 import OrdersPage from 'src/pages/OrdersPage/OrdersPage'
 import ProfilePage from 'src/pages/ProfilePage/ProfilePage'
+import NotificationsPage from 'src/pages/NotificationsPage/NotificationsPage'
 import NotFoundPage from 'src/pages/NotFoundPage/NotFoundPage'
 
 // ADMIN IMPORTS
@@ -20,6 +21,7 @@ import AdminProductsPage from 'src/pages/AdminProductsPage/AdminProductsPage'
 import AdminLoggedInUsersPage from 'src/pages/AdminLoggedInUsersPage/AdminLoggedInUsersPage'
 import AdminProfilesPage from 'src/pages/AdminProfilesPage/AdminProfilesPage'
 import AdminHelpPage from 'src/pages/AdminHelpPage/AdminHelpPage'
+import AdminNotificationsPage from 'src/pages/AdminNotificationsPage/AdminNotificationsPage'
 
 const Routes = () => {
   const { isAuthenticated } = useAuth()
@@ -34,6 +36,7 @@ const Routes = () => {
           <Route path="/basket" page={BasketPage} name="basket" />
           <Route path="/orders" page={OrdersPage} name="orders" />
           <Route path="/profile" page={ProfilePage} name="profile" />
+          <Route path="/notifications" page={NotificationsPage} name="notifications" />
         </Set>
       ) : (
         <Route path="/" page={WelcomePage} name="welcome" />
@@ -48,6 +51,7 @@ const Routes = () => {
       <Route path="/admin/users" page={AdminLoggedInUsersPage} name="adminLoggedInUsers" />
       <Route path="/admin/profiles" page={AdminProfilesPage} name="adminProfiles" />
       <Route path="/admin/help" page={AdminHelpPage} name="adminHelp" />
+      <Route path="/admin/notifications" page={AdminNotificationsPage} name="adminNotifications" />
 
       <Route notfound page={NotFoundPage} />
     </Router>
