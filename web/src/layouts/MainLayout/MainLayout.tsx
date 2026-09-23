@@ -117,9 +117,9 @@ const MainLayout = ({ children }) => {
         </nav>
       </div>
 
-      {/* Draggable Floating Cart */}
+      {/* Draggable Floating Cart — mobile only */}
       <div
-        className={`fixed z-50 transition-all duration-500 ease-out ${
+        className={`fixed z-50 transition-all duration-500 ease-out md:hidden ${
           showFloatingCart ? 'translate-x-0 opacity-100' : '-translate-x-24 opacity-0 pointer-events-none'
         }`}
         style={{ left: pos.x, top: pos.y, touchAction: 'none' }}
