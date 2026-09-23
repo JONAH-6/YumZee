@@ -47,16 +47,30 @@ const NotificationsPage = () => {
 
       <div className="p-4">
         {loading ? (
-          <p className="py-10 text-center text-[#6F6B76]">Loading...</p>
+          <div className="space-y-3">
+            {[0, 1, 2].map((i) => (
+              <div key={i} className="flex items-start gap-3 rounded-2xl border border-[#E9E5EE] bg-white p-4">
+                <div className="anim-shimmer h-10 w-10 shrink-0 rounded-full" />
+                <div className="flex-1 space-y-2 py-1">
+                  <div className="anim-shimmer h-4 w-1/2 rounded" />
+                  <div className="anim-shimmer h-3 w-full rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : notifications.length === 0 ? (
-          <div className="rounded-2xl bg-white p-8 text-center">
+          <div className="anim-pop-in rounded-2xl bg-white p-8 text-center">
             <Bell className="mx-auto h-12 w-12 text-[#A09BA8]" />
             <p className="mt-3 text-sm text-[#6F6B76]">No notifications yet.</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {notifications.map((n) => (
-              <div key={n.id} className="rounded-2xl bg-white p-4 border border-[#E9E5EE]">
+            {notifications.map((n, index) => (
+              <div
+                key={n.id}
+                className="anim-fade-up rounded-2xl border border-[#E9E5EE] bg-white p-4 transition-all duration-200 hover:-translate-y-0.5"
+                style={{ animationDelay: `${Math.min(index * 70, 420)}ms` }}
+              >
                 <div className="flex items-start gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#FFC107] shrink-0">
                     <Bell className="h-5 w-5 text-[#3E2679]" />

@@ -73,6 +73,10 @@
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-8px); }
 }
+@keyframes yum-shimmer {
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
 
 .anim-float { animation: yum-float 5s ease-in-out infinite; }
 .anim-float-slow { animation: yum-float-slow 7s ease-in-out infinite; }
@@ -82,4 +86,9 @@
 .anim-glow { animation: yum-glow-pulse 2.2s ease-out infinite; }
 .anim-bounce-soft { animation: yum-bounce-soft 2s ease-in-out infinite; }
 .anim-marquee { animation: yum-marquee 22s linear infinite; }
+.anim-shimmer {
+  background: linear-gradient(90deg, #f0ece2 25%, #faf6ea 50%, #f0ece2 75%);
+  background-size: 800px 100%;
+  animation: yum-shimmer 1.4s linear infinite;
+}
 

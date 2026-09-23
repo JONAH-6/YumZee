@@ -87,7 +87,7 @@ const BasketPage = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-[#FFF9E5] font-sans text-[#211F26]">
+    <div className="mx-auto min-h-screen max-w-md bg-[#FFF9E5] font-sans text-[#211F26] pb-40">
       <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-[#E9E5EE] bg-white p-4">
         <Link to={routes.home()} className="rounded-full p-1 hover:bg-gray-100">
           <ChevronLeft className="h-6 w-6 text-[#211F26]" />
@@ -98,13 +98,17 @@ const BasketPage = () => {
       <div className="p-4">
         <div className="space-y-3">
           {cart.length === 0 ? (
-            <div className="rounded-2xl bg-white p-6 text-center">
+            <div className="anim-pop-in rounded-2xl bg-white p-6 text-center">
               <p className="text-sm text-[#6F6B76]">Your basket is empty.</p>
-              <Link to={routes.home()} className="mt-4 inline-block rounded-full bg-[#FFC107] px-6 py-2 text-sm font-bold text-black">Browse Snacks</Link>
+              <Link to={routes.home()} className="mt-4 inline-block rounded-full bg-[#FFC107] px-6 py-2 text-sm font-bold text-black transition hover:bg-[#e6ad00] active:scale-95">Browse Snacks</Link>
             </div>
           ) : (
-            cart.map((item) => (
-              <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-white p-4">
+            cart.map((item, index) => (
+              <div
+                key={item.id}
+                className="anim-fade-up flex items-center gap-3 rounded-2xl bg-white p-4 transition-all duration-200 hover:-translate-y-0.5"
+                style={{ animationDelay: `${Math.min(index * 70, 420)}ms` }}
+              >
                 <img src={item.image} alt={item.name} className="h-24 w-24 rounded-xl object-contain bg-[#FFC107]" />
                 <div className="flex-1 min-w-0">
                   <h3 className="text-sm font-bold truncate">#{item.id} {item.name}</h3>
@@ -113,11 +117,11 @@ const BasketPage = () => {
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => updateQuantity(item.id, -1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">−</button>
-                    <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, 1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold">+</button>
+                    <button onClick={() => updateQuantity(item.id, -1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold transition active:scale-90">−</button>
+                    <span key={item.quantity} className="anim-pop-in inline-block w-6 text-center text-sm font-bold">{item.quantity}</span>
+                    <button onClick={() => updateQuantity(item.id, 1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold transition active:scale-90">+</button>
                   </div>
-                  <button onClick={() => removeFromCart(item.id)} className="rounded-md p-1 text-[#A09BA8] transition hover:text-red-500">
+                  <button onClick={() => removeFromCart(item.id)} className="rounded-md p-1 text-[#A09BA8] transition hover:scale-110 hover:text-red-500 active:scale-90">
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -127,7 +131,7 @@ const BasketPage = () => {
         </div>
 
         {cart.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4">
+          <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4" style={{ animationDelay: '0.25s' }}>
             {isGroupActive ? (
               <div className="text-center">
                 <span className="text-sm font-bold text-[#3E2679]">Group Order Active (30% Delivery Discount)</span>
@@ -145,7 +149,7 @@ const BasketPage = () => {
         )}
 
         {cart.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5">
+          <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5" style={{ animationDelay: '0.35s' }}>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-[#6F6B76]">Basket Subtotal</span>
               <span className="font-bold">₦{totalPrice.toLocaleString()}</span>
@@ -162,15 +166,19 @@ const BasketPage = () => {
         )}
 
         {cart.length > 0 && (
-          <button onClick={handlePlaceOrder} disabled={isPlacingOrder} className="mt-6 w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black disabled:opacity-50">
-            {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
-          </button>
+          <div className="fixed bottom-16 left-0 right-0 z-30 flex justify-center">
+            <div className="anim-fade-up w-full max-w-md bg-gradient-to-t from-[#FFF9E5] via-[#FFF9E5]/95 to-transparent px-4 pb-3 pt-6" style={{ animationDelay: '0.45s' }}>
+              <button onClick={handlePlaceOrder} disabled={isPlacingOrder} className="w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black transition hover:bg-[#e6ad00] active:scale-[0.98] disabled:opacity-50">
+                {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
       {isGroupModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-          <div className="relative w-full max-w-sm rounded-2xl bg-white p-6">
+          <div className="anim-pop-in relative w-full max-w-sm rounded-2xl bg-white p-6">
             <button onClick={() => setIsGroupModalOpen(false)} className="absolute right-3 top-3 text-gray-500"><X className="h-5 w-5" /></button>
             <h2 className="text-lg font-bold text-[#211F26] mb-4">Group Order</h2>
             <div className="space-y-4">

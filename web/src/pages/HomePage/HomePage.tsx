@@ -84,16 +84,20 @@ const HomePage = () => {
   }
 
   return (
-    <div className="bg-[#FFF9E5] p-4">
+    <div className="relative bg-gradient-to-b from-[#FFF3CF] via-[#FFF9E5] to-[#FDEBC8] p-4">
+      {/* Soft ambient wash so the glass has something to blur */}
+      <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-[#FFC107]/25 blur-3xl" />
+      <div className="pointer-events-none absolute -right-20 top-1/2 h-80 w-80 rounded-full bg-[#3E2679]/10 blur-3xl" />
+      <div className="relative">
       <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-2 mb-4 border-b border-[#E9E5EE]">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`relative whitespace-nowrap pb-2 text-sm font-bold transition-all ${
+            className={`relative whitespace-nowrap pb-2 text-sm font-bold transition-all duration-200 active:scale-95 ${
               selectedCategory === cat
-                ? 'text-[#3E2679] border-b-2 border-[#3E2679]'
-                : 'text-[#6F6B76] border-b-2 border-transparent'
+                ? 'text-[#3E2679] border-b-2 border-[#3E2679] scale-105'
+                : 'text-[#6F6B76] border-b-2 border-transparent hover:text-[#3E2679]'
             }`}
           >
             {cat}
@@ -101,29 +105,39 @@ const HomePage = () => {
         ))}
       </div>
 
-      <h2 className="mb-4 text-lg font-bold text-[#211F26]">Popular Near You</h2>
+      <h2 className="anim-fade-up mb-4 text-lg font-bold text-[#211F26]">Popular Near You</h2>
 
       {loading ? (
-        <div className="flex justify-center py-10">
-          <p className="text-sm text-[#6F6B76]">Loading snacks...</p>
+        <div className="flex flex-col space-y-2">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/60 p-2 backdrop-blur-md">
+              <div className="anim-shimmer h-28 w-28 rounded-lg" />
+              <div className="flex-1 space-y-2 py-2">
+                <div className="anim-shimmer h-4 w-2/3 rounded" />
+                <div className="anim-shimmer h-3 w-full rounded" />
+                <div className="anim-shimmer h-4 w-1/3 rounded" />
+              </div>
+            </div>
+          ))}
         </div>
       ) : (
         <div className="flex flex-col space-y-2">
           {filteredProducts.length === 0 ? (
-            <div className="bg-white p-6 text-center">
+            <div className="border border-white/70 bg-white/60 p-6 text-center backdrop-blur-md">
               <p className="text-sm text-[#6F6B76]">No snacks available yet.</p>
             </div>
           ) : (
-            filteredProducts.map((product) => (
+            filteredProducts.map((product, index) => (
               <Link
                 key={product.id}
                 to={routes.productDetail({ id: product.id })}
-                className="flex items-center gap-3 rounded-2xl bg-white p-2"
+                className="anim-fade-up group flex items-center gap-3 rounded-2xl border border-white/70 bg-white/60 p-2 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/80 active:scale-[0.99]"
+                style={{ animationDelay: `${Math.min(index * 70, 560)}ms` }}
               >
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="h-28 w-28 rounded-lg object-cover bg-[#FFC107]"
+                  className="h-28 w-28 rounded-lg object-cover bg-[#FFC107] transition-transform duration-300 group-hover:scale-105"
                 />
                 <div className="flex-1">
                   <h3 className="text-base font-bold text-[#211F26]">{product.name}</h3>
@@ -141,7 +155,7 @@ const HomePage = () => {
            {/* 🔥 NEW USER PROFILE PROMPT POPUP */}
       {showProfilePrompt && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
-          <div className="relative w-full max-w-xs rounded-2xl bg-white p-5 text-center">
+          <div className="anim-pop-in relative w-full max-w-xs rounded-2xl bg-white p-5 text-center">
             <button
               onClick={() => setShowProfilePrompt(false)}
               className="absolute right-3 top-3 rounded-full p-1 text-gray-400 hover:bg-gray-100"
@@ -176,6 +190,7 @@ const HomePage = () => {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

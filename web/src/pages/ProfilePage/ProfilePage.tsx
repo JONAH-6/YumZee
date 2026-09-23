@@ -137,9 +137,9 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen bg-[#FBF9FE] font-sans">
       <Metadata title="My Profile" description="Manage your delivery details" />
-      <div className="relative bg-white px-6 pb-10 pt-10 border-b border-[#E9E5EE]">
-        <div className="mx-auto flex max-w-3xl items-center gap-3">
-          {user.photoURL ? <img src={user.photoURL} alt="Avatar" className="h-14 w-14 rounded-full border border-[#E9E5EE] object-cover" /> : <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#4B2E83] text-xl font-black text-white">{getDisplayName()[0]?.toUpperCase() ?? 'U'}</div>}
+      <div className="relative border-b border-[#E9E5EE] bg-white px-6 pb-10 pt-10">
+        <div className="anim-fade-up mx-auto flex max-w-3xl items-center gap-3">
+          {user.photoURL ? <img src={user.photoURL} alt="Avatar" className="anim-pop-in h-14 w-14 rounded-full border border-[#E9E5EE] object-cover" /> : <div className="anim-pop-in flex h-14 w-14 items-center justify-center rounded-full bg-[#4B2E83] text-xl font-black text-white">{getDisplayName()[0]?.toUpperCase() ?? 'U'}</div>}
           <div className="flex-1 min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl font-extrabold text-[#211F26]">{getDisplayName()}</h2>
@@ -156,10 +156,10 @@ const ProfilePage = () => {
       </div>
 
       <div className="mx-auto max-w-3xl space-y-4 px-4 pb-10 pt-4">
-        <div className="rounded-2xl border border-[#E9E5EE] bg-white">
+        <div className="anim-fade-up rounded-2xl border border-[#E9E5EE] bg-white" style={{ animationDelay: '0.15s' }}>
           <div className="p-4"><h1 className="text-2xl font-black text-[#211F26]">Profile</h1></div>
           <div className="divide-y divide-[#E9E5EE]">
-            <button onClick={() => navigate(routes.orders())} className="flex w-full items-center justify-between px-4 py-4 text-left hover:bg-gray-50">
+            <button onClick={() => navigate(routes.orders())} className="flex w-full items-center justify-between px-4 py-4 text-left transition hover:bg-gray-50 active:bg-gray-100">
               <div className="flex items-center gap-3">
                 <ShoppingBag className="h-5 w-5 text-[#6F6B76]" />
                 <span className="text-base font-semibold text-[#211F26]">Order history</span>
@@ -168,7 +168,7 @@ const ProfilePage = () => {
             </button>
 
             <div>
-              <button onClick={() => setIsAccountOpen(!isAccountOpen)} className="flex w-full items-center justify-between px-4 py-4 text-left hover:bg-gray-50">
+              <button onClick={() => setIsAccountOpen(!isAccountOpen)} className="flex w-full items-center justify-between px-4 py-4 text-left transition hover:bg-gray-50 active:bg-gray-100">
                 <div className="flex items-center gap-3">
                   <MapPin className="h-5 w-5 text-[#6F6B76]" />
                   <span className="text-base font-semibold text-[#211F26]">Delivery details</span>
@@ -245,7 +245,7 @@ const ProfilePage = () => {
             </div>
 
             <div>
-              <button onClick={() => setIsHelpOpen(!isHelpOpen)} className="flex w-full items-center justify-between px-4 py-4 text-left hover:bg-gray-50">
+              <button onClick={() => setIsHelpOpen(!isHelpOpen)} className="flex w-full items-center justify-between px-4 py-4 text-left transition hover:bg-gray-50 active:bg-gray-100">
                 <div className="flex items-center gap-3">
                   <HelpCircle className="h-5 w-5 text-[#6F6B76]" />
                   <span className="text-base font-semibold text-[#211F26]">Help</span>
@@ -272,7 +272,7 @@ const ProfilePage = () => {
               )}
             </div>
 
-            <button onClick={handleLogout} disabled={isLoggingOut} className="flex w-full items-center justify-between px-4 py-4 text-left hover:bg-gray-50">
+            <button onClick={handleLogout} disabled={isLoggingOut} className="flex w-full items-center justify-between px-4 py-4 text-left transition hover:bg-gray-50 active:bg-gray-100">
               <div className="flex items-center gap-3">
                 <LogOut className="h-5 w-5 text-red-600" />
                 <span className="text-base font-semibold text-red-600">Log Out</span>

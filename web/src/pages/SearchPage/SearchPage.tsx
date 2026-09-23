@@ -86,17 +86,17 @@ const SearchPage = () => {
       </header>
 
       <main className="mx-auto max-w-md px-4 pt-0">
-        <div className="mb-4 text-xl font-bold text-[#211F26]">Search Results</div>
+        <div className="anim-fade-up mb-4 text-xl font-bold text-[#211F26]">Search Results</div>
 
-        <div className="mb-4 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide">
+        <div className="anim-fade-up mb-4 flex gap-2 overflow-x-auto whitespace-nowrap scrollbar-hide" style={{ animationDelay: '0.1s' }}>
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => handleCategoryClick(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap ${
+              className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition-all duration-200 active:scale-95 ${
                 activeCategory === cat
-                  ? 'bg-[#3E2679] text-white'
-                  : 'bg-white text-[#6F6B76] border border-[#E9E5EE]'
+                  ? 'bg-[#3E2679] text-white scale-105'
+                  : 'border border-[#E9E5EE] bg-white text-[#6F6B76] hover:text-[#3E2679]'
               }`}
             >
               {cat}
@@ -106,24 +106,36 @@ const SearchPage = () => {
 
         <section>
           {loading ? (
-            <p className="py-12 text-center text-[#6F6B76]">Loading snacks...</p>
+            <div className="flex flex-col space-y-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3 rounded-2xl bg-white p-2">
+                  <div className="anim-shimmer h-28 w-28 rounded-lg" />
+                  <div className="flex-1 space-y-2 py-2">
+                    <div className="anim-shimmer h-4 w-2/3 rounded" />
+                    <div className="anim-shimmer h-3 w-full rounded" />
+                    <div className="anim-shimmer h-4 w-1/3 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
           ) : filteredProducts.length === 0 ? (
-            <div className="py-12 text-center text-[#6F6B76]">
+            <div className="anim-pop-in py-12 text-center text-[#6F6B76]">
               <p>No snacks found</p>
             </div>
           ) : (
             <div className="flex flex-col space-y-2">
-              {filteredProducts.map((product) => (
+              {filteredProducts.map((product, index) => (
                 <Link
                   key={product.id}
                   to={routes.productDetail({ id: product.id })}
-                  className="flex items-center gap-3 rounded-2xl bg-white p-2"
+                  className="anim-fade-up group flex items-center gap-3 rounded-2xl bg-white p-2 transition-all duration-200 hover:-translate-y-0.5 active:scale-[0.99]"
+                  style={{ animationDelay: `${Math.min(index * 70, 560)}ms` }}
                 >
                   {/* Yellow Background Image, Bigger */}
                   <img
                     src={product.image}
                     alt={product.name}
-                    className="h-28 w-28 rounded-lg object-cover bg-[#FFC107]"
+                    className="h-28 w-28 rounded-lg object-cover bg-[#FFC107] transition-transform duration-300 group-hover:scale-105"
                   />
                   <div className="flex-1">
                     <h3 className="text-base font-bold text-[#211F26]">{product.name}</h3>
