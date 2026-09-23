@@ -1,8 +1,9 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-@import url('https://fonts.googleapis.com/css2?family=Roboto+Slab:wght@100..900&display=swap');
 
 * {
   font-family: 'Roboto Slab', serif;
@@ -33,4 +34,52 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #a52a2a;
 }
+
+/* ---- Yumzee Welcome animations ---- */
+@keyframes yum-float {
+  0%, 100% { transform: translateY(0) rotate(-6deg); }
+  50% { transform: translateY(-18px) rotate(8deg); }
+}
+@keyframes yum-float-slow {
+  0%, 100% { transform: translateY(0) scale(1); opacity: 0.9; }
+  50% { transform: translateY(-28px) scale(1.08); opacity: 1; }
+}
+@keyframes yum-pop-in {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes yum-fade-up {
+  from { transform: translateY(22px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes yum-wiggle {
+  0%, 100% { transform: rotate(-4deg) scale(1); }
+  50% { transform: rotate(4deg) scale(1.06); }
+}
+@keyframes yum-shine {
+  0% { transform: translateX(-120%) skewX(-20deg); }
+  100% { transform: translateX(240%) skewX(-20deg); }
+}
+@keyframes yum-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+@keyframes yum-glow-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.55); }
+  50% { box-shadow: 0 0 0 14px rgba(255, 193, 7, 0); }
+}
+@keyframes yum-bounce-soft {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.anim-float { animation: yum-float 5s ease-in-out infinite; }
+.anim-float-slow { animation: yum-float-slow 7s ease-in-out infinite; }
+.anim-pop-in { animation: yum-pop-in 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.anim-fade-up { animation: yum-fade-up 0.7s ease-out both; }
+.anim-wiggle { animation: yum-wiggle 2.6s ease-in-out infinite; }
+.anim-glow { animation: yum-glow-pulse 2.2s ease-out infinite; }
+.anim-bounce-soft { animation: yum-bounce-soft 2s ease-in-out infinite; }
+.anim-marquee { animation: yum-marquee 22s linear infinite; }
 
