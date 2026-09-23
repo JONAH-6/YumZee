@@ -19,7 +19,20 @@ const MainLayout = ({ children }) => {
   const didDrag = useRef(false)
 
   useEffect(() => {
-    setPos({ x: 16, y: window.innerHeight - 200 })
+    const clampToViewport = (x: number, y: number) => ({
+      x: Math.min(Math.max(16, x), Math.max(16, window.innerWidth - 72)),
+      y: Math.min(Math.max(16, y), Math.max(16, window.innerHeight - 72)),
+    })
+
+    // Initial position — always inside the viewport
+    setPos(clampToViewport(16, window.innerHeight - 200))
+
+    const handleResize = () => {
+      setPos((prev) => clampToViewport(prev.x, prev.y))
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
@@ -68,8 +81,10 @@ const MainLayout = ({ children }) => {
     const margin = 16
     const width = window.innerWidth
     const height = window.innerHeight
-    const newX = pos.x < width / 2 ? margin : width - margin - 56
-    const newY = Math.min(Math.max(margin, pos.y), height - margin - 56)
+    // Always snap back INSIDE the viewport
+    const rawX = pos.x < width / 2 ? margin : width - margin - 56
+    const newX = Math.min(Math.max(margin, rawX), Math.max(margin, width - margin - 56))
+    const newY = Math.min(Math.max(margin, pos.y), Math.max(margin, height - margin - 56))
     setPos({ x: newX, y: newY })
   }
 

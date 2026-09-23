@@ -84,7 +84,7 @@ const HomePage = () => {
   }
 
   return (
-    <div className="relative bg-gradient-to-b from-[#FFF3CF] via-[#FFF9E5] to-[#FDEBC8] p-4">
+    <div className="relative overflow-hidden bg-gradient-to-b from-[#FFF3CF] via-[#FFF9E5] to-[#FDEBC8] p-4">
       {/* Soft ambient wash so the glass has something to blur */}
       <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-[#FFC107]/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 top-1/2 h-80 w-80 rounded-full bg-[#3E2679]/10 blur-3xl" />
