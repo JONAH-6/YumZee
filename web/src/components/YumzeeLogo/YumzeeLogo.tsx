@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useId } from 'react'
 
 interface Props {
   size?: number
@@ -6,6 +6,7 @@ interface Props {
 }
 
 const YumzeeLogo: React.FC<Props> = ({ size = 40, className = '' }) => {
+  const arcId = `yumzee-arc-${useId().replace(/:/g, '')}`
   return (
     <svg
       width={size}
@@ -16,7 +17,7 @@ const YumzeeLogo: React.FC<Props> = ({ size = 40, className = '' }) => {
     >
       {/* ===== TEXT ARCH PATH ===== */}
       <defs>
-        <path id="textArc" d="M 22,118 Q 100,38 178,118" fill="none" />
+        <path id={arcId} d="M 22,118 Q 100,38 178,118" fill="none" />
       </defs>
 
       {/* ===== YUM (yellow, arched, bubbly) ===== */}
@@ -31,7 +32,7 @@ const YumzeeLogo: React.FC<Props> = ({ size = 40, className = '' }) => {
         strokeLinejoin="round"
         style={{ paintOrder: 'stroke' }}
       >
-        <textPath href="#textArc" startOffset="4%">
+        <textPath href={`#${arcId}`} xlinkHref={`#${arcId}`} startOffset="4%">
           YUM
         </textPath>
       </text>
@@ -48,7 +49,7 @@ const YumzeeLogo: React.FC<Props> = ({ size = 40, className = '' }) => {
         strokeLinejoin="round"
         style={{ paintOrder: 'stroke' }}
       >
-        <textPath href="#textArc" startOffset="52%">
+        <textPath href={`#${arcId}`} xlinkHref={`#${arcId}`} startOffset="52%">
           ZEE
         </textPath>
       </text>

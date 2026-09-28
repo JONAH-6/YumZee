@@ -3,6 +3,7 @@ import { ShoppingCart, User, LogOut, Home, Search, ShoppingBag, Bell } from 'luc
 import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { useAuth } from 'src/contexts/AuthContexts'
+import YumzeeLogo from 'src/components/YumzeeLogo/YumzeeLogo'
 import { db } from 'src/lib/firebase'
 import { collection, doc, onSnapshot } from 'firebase/firestore'
 
@@ -98,6 +99,7 @@ const MainLayout = ({ children }) => {
       <header className="sticky top-0 z-40 bg-[#3E2679] text-white">
         <div className="flex items-center justify-between px-4 py-3">
           <Link to={routes.home()} className="flex items-center gap-1.5">
+            <YumzeeLogo size={38} />
             <span className="text-2xl font-black tracking-tight">
               <span className="text-[#FFC107]">YUM</span>
               <span className="text-white">ZEE</span>
