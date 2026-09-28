@@ -24,7 +24,6 @@ const MainLayout = ({ children }) => {
       y: Math.min(Math.max(16, y), Math.max(16, window.innerHeight - 72)),
     })
 
-    // Initial position — always inside the viewport
     setPos(clampToViewport(16, window.innerHeight - 200))
 
     const handleResize = () => {
@@ -81,7 +80,6 @@ const MainLayout = ({ children }) => {
     const margin = 16
     const width = window.innerWidth
     const height = window.innerHeight
-    // Always snap back INSIDE the viewport
     const rawX = pos.x < width / 2 ? margin : width - margin - 56
     const newX = Math.min(Math.max(margin, rawX), Math.max(margin, width - margin - 56))
     const newY = Math.min(Math.max(margin, pos.y), Math.max(margin, height - margin - 56))
@@ -94,17 +92,17 @@ const MainLayout = ({ children }) => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-md bg-[#FFF9E5] font-sans text-[#211F26] antialiased">
+    <div className="mx-auto min-h-screen max-w-md overflow-x-hidden bg-[#FFF9E5] font-sans text-[#211F26] antialiased">
       <header className="sticky top-0 z-40 bg-[#3E2679] text-white">
         <div className="flex items-center justify-between px-4 py-3">
-          <Link to={routes.home()} className="flex items-center gap-1.5">
-            <span className="text-2xl font-black tracking-tight">
+          <Link to={routes.home()} className="flex items-center gap-2">
+            <span className="text-lg font-black tracking-tight">
               <span className="text-[#FFC107]">YUM</span>
               <span className="text-white">ZEE</span>
             </span>
           </Link>
           <div className="flex items-center gap-2">
-            <Link to={routes.notifications()} className="relative rounded-full   p-2">
+            <Link to={routes.notifications()} className="relative rounded-full bg-white/20 p-2">
               <Bell className="h-5 w-5 text-white" />
               {unreadCount > 0 && (
                 <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
