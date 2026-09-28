@@ -10,6 +10,7 @@ import BasketPage from 'src/pages/BasketPage/BasketPage'
 import OrdersPage from 'src/pages/OrdersPage/OrdersPage'
 import ProfilePage from 'src/pages/ProfilePage/ProfilePage'
 import NotificationsPage from 'src/pages/NotificationsPage/NotificationsPage'
+import BrandPage from 'src/pages/BrandPage/BrandPage'
 import NotFoundPage from 'src/pages/NotFoundPage/NotFoundPage'
 
 // ADMIN IMPORTS
@@ -37,6 +38,7 @@ const Routes = () => {
           <Route path="/orders" page={OrdersPage} name="orders" />
           <Route path="/profile" page={ProfilePage} name="profile" />
           <Route path="/notifications" page={NotificationsPage} name="notifications" />
+          <Route path="/brand" page={BrandPage} name="brand" />
         </Set>
       ) : (
         <Route path="/" page={WelcomePage} name="welcome" />
