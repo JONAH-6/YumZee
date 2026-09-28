@@ -16,68 +16,75 @@ const YumzeeLogo: React.FC<Props> = ({ size = 40, className = '' }) => {
     >
       {/* ===== TEXT ARCH PATH ===== */}
       <defs>
-        <path
-          id="textArc"
-          d="M 22,118 Q 100,38 178,118"
-          fill="none"
-        />
+        <path id="textArc" d="M 22,118 Q 100,38 178,118" fill="none" />
       </defs>
 
-      {/* ===== YUM (yellow, arched) ===== */}
+      {/* ===== YUM (yellow, arched, bubbly) ===== */}
       <text
-        fontFamily="'Arial Black', Arial, Helvetica, sans-serif"
+        fontFamily="'Arial Rounded MT Bold','Baloo 2','Fredoka','Nunito','Arial Black',Arial,sans-serif"
         fontWeight="900"
-        fontSize="40"
+        fontSize="38"
         fill="#FFC107"
-        letterSpacing="-2"
+        letterSpacing="-1"
+        stroke="#FFC107"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        style={{ paintOrder: 'stroke' }}
       >
-        <textPath href="#textArc" startOffset="2%">
+        <textPath href="#textArc" startOffset="4%">
           YUM
         </textPath>
       </text>
 
-      {/* ===== ZEE (white, arched) ===== */}
+      {/* ===== ZEE (white, arched, bubbly) ===== */}
       <text
-        fontFamily="'Arial Black', Arial, Helvetica, sans-serif"
+        fontFamily="'Arial Rounded MT Bold','Baloo 2','Fredoka','Nunito','Arial Black',Arial,sans-serif"
         fontWeight="900"
-        fontSize="40"
+        fontSize="38"
         fill="#FFFFFF"
-        letterSpacing="-2"
+        letterSpacing="-1"
+        stroke="#FFFFFF"
+        strokeWidth="1.5"
+        strokeLinejoin="round"
+        style={{ paintOrder: 'stroke' }}
       >
-        <textPath href="#textArc" startOffset="53%">
+        <textPath href="#textArc" startOffset="52%">
           ZEE
         </textPath>
       </text>
 
-      {/* ===== LEFT EYE (curved ^) ===== */}
+      {/* ===== LEFT EYE (gentle curve) ===== */}
       <path
-        d="M 62,152 Q 78,134 94,152"
+        d="M 58,148 Q 74,130 90,148"
         stroke="#FFC107"
-        strokeWidth="10"
+        strokeWidth="8.5"
         strokeLinecap="round"
         fill="none"
       />
 
-      {/* ===== RIGHT EYE (curved ^) ===== */}
+      {/* ===== RIGHT EYE (gentle curve) ===== */}
       <path
-        d="M 106,152 Q 122,134 138,152"
+        d="M 110,148 Q 126,130 142,148"
         stroke="#FFC107"
-        strokeWidth="10"
+        strokeWidth="8.5"
         strokeLinecap="round"
         fill="none"
       />
 
-      {/* ===== TONGUE (rounded blob tucked under center of smile) ===== */}
+      {/* ===== TONGUE (tucked UNDER right side of smile, pointing down-right) ===== */}
       <path
-        d="M 88,186 Q 100,194 112,186 Q 110,208 100,208 Q 90,208 88,186 Z"
+        d="M 118,182 Q 133,190 148,176 Q 146,199 135,207 Q 122,201 118,182 Z"
         fill="#FFFFFF"
+        stroke="#FFC107"
+        strokeWidth="3.5"
+        strokeLinejoin="round"
       />
 
-      {/* ===== SMILE (big arc, drawn over tongue so it peeks from inside) ===== */}
+      {/* ===== SMILE (big smooth arc, drawn OVER tongue top so it tucks inside) ===== */}
       <path
-        d="M 48,170 Q 100,212 152,170"
+        d="M 46,168 Q 100,214 154,168"
         stroke="#FFC107"
-        strokeWidth="12"
+        strokeWidth="11"
         strokeLinecap="round"
         fill="none"
       />
