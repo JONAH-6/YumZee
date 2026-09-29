@@ -83,6 +83,15 @@ const HomePage = () => {
     navigate(routes.profile())
   }
 
+  // Name for the personal heading: Google first name, else email prefix.
+  // e.g. "Emeka Mazi" -> "Emeka", "maziemeka6@gmail.com" -> "Maziemeka6"
+  const userFirstName = (() => {
+    const raw =
+      user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || ''
+    const clean = raw.trim()
+    return clean ? clean.charAt(0).toUpperCase() + clean.slice(1) : 'there'
+  })()
+
   return (
     <div className="relative overflow-hidden bg-gradient-to-b from-[#FFF3CF] via-[#FFF9E5] to-[#FDEBC8] p-4">
       {/* Soft ambient wash so the glass has something to blur */}
@@ -105,7 +114,7 @@ const HomePage = () => {
         ))}
       </div>
 
-      <h2 className="anim-fade-up mb-4 text-lg font-bold text-[#211F26]">Popular Near You</h2>
+      <h2 className="anim-fade-up mb-4 text-lg font-bold text-[#211F26]">{userFirstName}, this is for you</h2>
 
       {loading ? (
         <div className="flex flex-col space-y-2">
