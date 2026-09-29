@@ -68,6 +68,7 @@ const HomePage = () => {
     'All Items',
     'Pastries',
     'Savory Snacks',
+    'Kilishi',
     'Cakes & Desserts',
     'Drinks',
     'Healthy Bites',

@@ -25,6 +25,7 @@ const SearchPage = () => {
     'All Items',
     'Pastries',
     'Savory Snacks',
+    'Kilishi',
     'Cakes & Desserts',
     'Drinks',
     'Healthy Bites',

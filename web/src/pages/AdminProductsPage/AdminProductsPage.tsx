@@ -176,6 +176,7 @@ const AdminProductsPage = () => {
               <select value={newProduct.category} onChange={(e) => setNewProduct({ ...newProduct, category: e.target.value })} className="w-full rounded-lg border border-red-300 bg-white px-4 py-2 text-sm text-gray-800" required>
                 <option value="Pastries">Pastries</option>
                 <option value="Savory Snacks">Savory Snacks</option>
+                <option value="Kilishi">Kilishi</option>
                 <option value="Cakes & Desserts">Cakes & Desserts</option>
                 <option value="Drinks">Drinks</option>
                 <option value="Healthy Bites">Healthy Bites</option>
