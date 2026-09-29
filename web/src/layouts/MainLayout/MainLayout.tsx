@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { ShoppingCart, User, LogOut, Home, Search, ShoppingBag, Bell } from 'lucide-react'
-import { Link, navigate, routes } from '@redwoodjs/router'
+import { Link, navigate, routes, useLocation } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { useAuth } from 'src/contexts/AuthContexts'
 import YumzeeLogo from 'src/components/YumzeeLogo/YumzeeLogo'
@@ -64,6 +64,26 @@ const MainLayout = ({ children }) => {
 
   const unreadCount = Math.max(0, totalNotifs - readCount)
 
+  // WhatsApp-style header title: logo stays, only the text changes per page.
+  // Home (/) shows YUMZEE, every other page shows its own name.
+  const { pathname } = useLocation()
+  const headerTitle =
+    pathname === '/search'
+      ? 'Search'
+      : pathname === '/orders'
+        ? 'Orders'
+        : pathname === '/profile'
+          ? 'Profile'
+          : pathname === '/notifications'
+            ? 'Notifications'
+            : pathname === '/basket'
+              ? 'Basket'
+              : pathname === '/brand'
+                ? 'Brand'
+                : pathname.startsWith('/product/')
+                  ? 'Product'
+                  : null
+
   const onPointerDown = (e: React.PointerEvent) => {
     dragging.current = true
     didDrag.current = false
@@ -101,8 +121,14 @@ const MainLayout = ({ children }) => {
           <Link to={routes.home()} className="flex items-center gap-1.5">
             <YumzeeLogo size={38} />
             <span className="text-2xl font-black tracking-tight">
-              <span className="text-[#FFC107]">YUM</span>
-              <span className="text-white">ZEE</span>
+              {headerTitle ? (
+                <span className="text-white">{headerTitle}</span>
+              ) : (
+                <>
+                  <span className="text-[#FFC107]">YUM</span>
+                  <span className="text-white">ZEE</span>
+                </>
+              )}
             </span>
           </Link>
           <div className="flex items-center gap-2">
