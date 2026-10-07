@@ -106,30 +106,11 @@ const CheckoutPage = () => {
 
     setIsPaying(true)
 
-    try {
-      const handler = window.PaystackPop.setup({
-      key: PAYSTACK_PUBLIC_KEY,
-      email: user.email,
-      amount: Math.round(total * 100), // Paystack charges in kobo
-      currency: 'NGN',
-      ref: `YZ-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
-      metadata: {
-        custom_fields: [
-          {
-            display_name: 'Customer Name',
-            variable_name: 'customer_name',
-            value: user.displayName || user.email,
-          },
-          {
-            display_name: 'Delivery Address',
-            variable_name: 'delivery_address',
-            value: address?.fullAddress || '',
-          },
-        ],
-      },
-      callback: async (response: any) => {
-        // Payment succeeded — now save the order
-        try {
+    // Plain (non-async) callback — Paystack v1 rejects async functions here.
+    // The async order-saving runs inside saveOrder().
+    const saveOrder = async (reference: string) => {
+      // Payment succeeded — now save the order
+      try {
           let userPhone = ''
           if (user?.uid) {
             try {
@@ -161,7 +142,7 @@ const CheckoutPage = () => {
             groupCode: checkoutData.inviteCode || '',
             isCompleted: false,
             paid: true,
-            paymentRef: response.reference,
+            paymentRef: reference,
             paymentMethod: 'Paystack',
             createdAt: serverTimestamp(),
             latitude: latitude,
@@ -193,14 +174,29 @@ const CheckoutPage = () => {
         } finally {
           setIsPaying(false)
         }
-      },
-      onClose: () => {
-        // Customer closed the popup without paying — order is NOT saved
-        setIsPaying(false)
-      },
-    })
+    }
 
-    handler.openIframe()
+    const paymentCallback = (response: any) => {
+      saveOrder(response.reference)
+    }
+
+    const closeHandler = () => {
+      // Customer closed the popup without paying — order is NOT saved
+      setIsPaying(false)
+    }
+
+    try {
+      const handler = window.PaystackPop.setup({
+        key: PAYSTACK_PUBLIC_KEY,
+        email: user.email,
+        amount: Math.round(total * 100), // Paystack charges in kobo
+        currency: 'NGN',
+        ref: `YZ-${Date.now()}-${Math.floor(Math.random() * 100000)}`,
+        callback: paymentCallback,
+        onClose: closeHandler,
+      })
+
+      handler.openIframe()
     } catch (error) {
       console.error('Paystack failed to start:', error)
       alert(
