@@ -3,7 +3,7 @@ import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
 import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
-import { Trash2, ChevronLeft, Users, X, MapPin } from 'lucide-react'
+import { Trash2, ChevronLeft, Users, X, MapPin, Pencil, Check } from 'lucide-react'
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
 import { db } from 'src/lib/firebase'
 import { useAuth } from 'src/contexts/AuthContexts'
@@ -26,6 +26,15 @@ const BasketPage = () => {
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'ok' | 'denied'>('idle')
   const [address, setAddress] = useState<AddressDetails>({ ...EMPTY_ADDRESS })
   const [lookingUp, setLookingUp] = useState(false)
+  const [isEditingAddress, setIsEditingAddress] = useState(false)
+  const [editedAddress, setEditedAddress] = useState<AddressDetails>({ ...EMPTY_ADDRESS })
+
+  // Keep the edit fields in sync while the map auto-detects
+  useEffect(() => {
+    if (!isEditingAddress) {
+      setEditedAddress({ ...address })
+    }
+  }, [address, isEditingAddress])
 
   const lookupAddress = async (lat: number, lng: number) => {
     setLookingUp(true)
@@ -62,6 +71,29 @@ const BasketPage = () => {
 
   const deliveryFee = isGroupActive ? 140 : 500
   const total = totalPrice + deliveryFee
+
+  const startEditingAddress = () => {
+    setEditedAddress({ ...address })
+    setIsEditingAddress(true)
+  }
+
+  const saveEditedAddress = () => {
+    const combined = [
+      editedAddress.street,
+      editedAddress.area,
+      editedAddress.city,
+      editedAddress.state,
+    ]
+      .filter(Boolean)
+      .join(', ')
+    setAddress({ ...editedAddress, fullAddress: combined || editedAddress.fullAddress })
+    setIsEditingAddress(false)
+  }
+
+  const cancelEditingAddress = () => {
+    setEditedAddress({ ...address })
+    setIsEditingAddress(false)
+  }
 
   const handleGenerateInviteCode = () => setInviteCode(generateGroupCode(cart))
 
@@ -228,12 +260,72 @@ const BasketPage = () => {
                   : 'Your delivery point'
               }
             />
-            {/* Auto-detected address, Glovo style */}
-            <div className="mt-2 rounded-xl bg-[#F5F1FB] p-3 text-sm">
-              {lookingUp ? (
+            {/* Auto-detected address, Glovo style, with manual edit */}
+            <div className="relative mt-2 rounded-xl bg-[#F5F1FB] p-3 text-sm">
+              {!isEditingAddress && (
+                <button
+                  type="button"
+                  onClick={startEditingAddress}
+                  title="Edit address"
+                  className="absolute right-2 top-2 rounded-full bg-white p-1.5 text-[#3E2679] shadow-sm transition hover:bg-[#FFC107] active:scale-90"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {isEditingAddress ? (
+                <div className="space-y-2">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[#3E2679]">
+                    Correct the address
+                  </p>
+                  <input
+                    type="text"
+                    value={editedAddress.street}
+                    onChange={(e) => setEditedAddress({ ...editedAddress, street: e.target.value })}
+                    placeholder="Street name"
+                    className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
+                  />
+                  <input
+                    type="text"
+                    value={editedAddress.area}
+                    onChange={(e) => setEditedAddress({ ...editedAddress, area: e.target.value })}
+                    placeholder="Area / Neighbourhood"
+                    className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
+                  />
+                  <input
+                    type="text"
+                    value={editedAddress.city}
+                    onChange={(e) => setEditedAddress({ ...editedAddress, city: e.target.value })}
+                    placeholder="City"
+                    className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
+                  />
+                  <input
+                    type="text"
+                    value={editedAddress.state}
+                    onChange={(e) => setEditedAddress({ ...editedAddress, state: e.target.value })}
+                    placeholder="State"
+                    className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
+                  />
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={saveEditedAddress}
+                      className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-[#FFC107] py-2 text-xs font-black text-black transition hover:bg-[#e6ad00] active:scale-95"
+                    >
+                      <Check className="h-4 w-4" /> Save Address
+                    </button>
+                    <button
+                      type="button"
+                      onClick={cancelEditingAddress}
+                      className="rounded-lg bg-white px-3 py-2 text-xs font-bold text-[#6F6B76] transition hover:bg-gray-100 active:scale-95"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : lookingUp ? (
                 <p className="text-[#6F6B76]">Detecting your address...</p>
               ) : address.street || address.area || address.city ? (
-                <>
+                <div className="pr-8">
                   {address.street && (
                     <p className="font-bold text-[#211F26]">{address.street}</p>
                   )}
@@ -242,9 +334,9 @@ const BasketPage = () => {
                       .filter(Boolean)
                       .join(', ')}
                   </p>
-                </>
+                </div>
               ) : (
-                <p className="text-[#6F6B76]">
+                <p className="pr-8 text-[#6F6B76]">
                   Tap the map or use your current location to detect your address.
                 </p>
               )}
