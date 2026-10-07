@@ -284,6 +284,12 @@ const AdminOrdersPage = () => {
                   <DeliveryMap
                     latitude={selectedOrder.latitude}
                     longitude={selectedOrder.longitude}
+                    addressLabel={
+                      selectedOrder.fullAddress ||
+                      [selectedOrder.street, selectedOrder.area, selectedOrder.city]
+                        .filter(Boolean)
+                        .join(', ')
+                    }
                   />
                 ) : (
                   <p className="text-sm text-gray-400">No location shared for this order.</p>

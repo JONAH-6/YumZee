@@ -222,6 +222,11 @@ const BasketPage = () => {
                 setLocStatus('ok')
               }}
               interactive
+              addressLabel={
+                address.street
+                  ? `${address.street}, ${[address.area, address.city].filter(Boolean).join(', ')}`
+                  : 'Your delivery point'
+              }
             />
             {/* Auto-detected address, Glovo style */}
             <div className="mt-2 rounded-xl bg-[#F5F1FB] p-3 text-sm">

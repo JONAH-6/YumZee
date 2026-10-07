@@ -3,6 +3,8 @@ import {
   MapContainer,
   TileLayer,
   Marker,
+  Popup,
+  Circle,
   useMap,
   useMapEvents,
 } from 'react-leaflet'
@@ -75,6 +77,7 @@ interface Props {
     address: AddressDetails
   ) => void
   interactive?: boolean
+  addressLabel?: string
 }
 
 const LocationMarker = ({
@@ -117,6 +120,7 @@ const DeliveryMap = ({
   longitude,
   onLocationChange,
   interactive = false,
+  addressLabel = '',
 }: Props) => {
   return (
     <div className="h-[220px] w-full overflow-hidden rounded-xl border border-[#E9E5EE]">
@@ -130,7 +134,25 @@ const DeliveryMap = ({
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        <Marker position={[latitude, longitude]} />
+        {/* Delivery zone radius around the pin */}
+        <Circle
+          center={[latitude, longitude]}
+          radius={150}
+          pathOptions={{
+            color: '#3E2679',
+            fillColor: '#3E2679',
+            fillOpacity: 0.12,
+            weight: 1,
+          }}
+        />
+        <Marker position={[latitude, longitude]}>
+          <Popup>
+            <div style={{ fontSize: '12px' }}>
+              <strong>Delivery Point</strong>
+              {addressLabel && <p style={{ marginTop: '4px' }}>{addressLabel}</p>}
+            </div>
+          </Popup>
+        </Marker>
         <MapUpdater lat={latitude} lng={longitude} />
         <LocationMarker
           onLocationChange={onLocationChange}
