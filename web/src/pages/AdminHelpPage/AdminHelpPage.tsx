@@ -3,7 +3,7 @@ import { Metadata } from '@redwoodjs/web'
 import { db } from 'src/lib/firebase'
 import { collection, onSnapshot } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, Mail, HelpCircle, Clock, Phone } from 'lucide-react'
+import { ArrowLeft, Mail, HelpCircle, Clock, Phone, MessageSquare } from 'lucide-react'
 
 const AdminHelpPage = () => {
   const [helpRequests, setHelpRequests] = useState<any[]>([])
@@ -65,6 +65,12 @@ const AdminHelpPage = () => {
                         <Phone className="h-4 w-4" /> Phone Number
                       </p>
                       <p className="text-sm text-gray-700">{req.userPhone || 'No phone provided (Check Profile)'}</p>
+                    </div>
+                    <div className="flex-1">
+                      <p className="mb-1 flex items-center gap-2 text-xs font-bold text-red-600">
+                        <MessageSquare className="h-4 w-4" /> Other Details
+                      </p>
+                      <p className="text-sm text-gray-700 break-words">{req.issueOther || 'No extra details'}</p>
                     </div>
                   </div>
                 </div>
