@@ -1,12 +1,13 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
 import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
-import { Trash2, ChevronLeft, Users, X } from 'lucide-react'
+import { Trash2, ChevronLeft, Users, X, MapPin } from 'lucide-react'
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
 import { db } from 'src/lib/firebase'
 import { useAuth } from 'src/contexts/AuthContexts'
+import DeliveryMap from 'src/components/DeliveryMap/DeliveryMap'
 
 const BasketPage = () => {
   const { cart, removeFromCart, updateQuantity, totalPrice, addToCart } = useCart()
@@ -16,6 +17,32 @@ const BasketPage = () => {
   const [isGroupActive, setIsGroupActive] = useState(false)
   const [inviteCode, setInviteCode] = useState('')
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
+  const [latitude, setLatitude] = useState(6.5244) // Default: Lagos
+  const [longitude, setLongitude] = useState(3.3792)
+  const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'ok' | 'denied'>('idle')
+
+  // Ask for location permission when checkout opens
+  const requestLocation = () => {
+    if (!('geolocation' in navigator)) {
+      setLocStatus('denied')
+      return
+    }
+    setLocStatus('locating')
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setLatitude(pos.coords.latitude)
+        setLongitude(pos.coords.longitude)
+        setLocStatus('ok')
+      },
+      () => setLocStatus('denied'),
+      { enableHighAccuracy: true, timeout: 10000 }
+    )
+  }
+
+  useEffect(() => {
+    requestLocation()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const deliveryFee = isGroupActive ? 140 : 500
   const total = totalPrice + deliveryFee
@@ -77,6 +104,8 @@ const BasketPage = () => {
         groupCode: inviteCode,
         isCompleted: false, // 🔥 NEW - Shows in "Orders" tab, not "Completed"
         createdAt: serverTimestamp(),
+        latitude: latitude, // Customer live location for admin map
+        longitude: longitude,
       })
 
       // Personal notification: only this user sees it (filtered by targetEmail)
@@ -152,6 +181,31 @@ const BasketPage = () => {
               <button onClick={() => setIsGroupModalOpen(true)} className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#3E2679] py-3 text-sm font-bold text-[#3E2679]">
                 <Users className="h-4 w-4" /> Save on Delivery with a Group Order
               </button>
+            )}
+          </div>
+        )}
+
+        {cart.length > 0 && (
+          <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4" style={{ animationDelay: '0.3s' }}>
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-xs font-bold uppercase tracking-wider text-[#6F6B76]">Delivery Location</p>
+              {locStatus === 'ok' && <span className="text-[11px] font-bold text-green-600">Location set</span>}
+            </div>
+            <DeliveryMap
+              latitude={latitude}
+              longitude={longitude}
+              onLocationChange={(lat, lng) => {
+                setLatitude(lat)
+                setLongitude(lng)
+                setLocStatus('ok')
+              }}
+              interactive
+            />
+            <button type="button" onClick={requestLocation} disabled={locStatus === 'locating'} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white disabled:opacity-50">
+              <MapPin className="h-4 w-4" /> {locStatus === 'locating' ? 'Locating...' : locStatus === 'ok' ? 'Use My Current Location Again' : 'Use My Current Location'}
+            </button>
+            {locStatus === 'denied' && (
+              <p className="mt-1 text-[11px] text-red-500">Location blocked — allow access when asked, or drag the pin on the map.</p>
             )}
           </div>
         )}

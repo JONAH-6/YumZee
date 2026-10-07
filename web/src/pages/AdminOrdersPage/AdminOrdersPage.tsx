@@ -4,6 +4,7 @@ import { db } from 'src/lib/firebase'
 import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, ShoppingBag, Clock, MoreVertical, Eye, X, Check, Phone, Mail } from 'lucide-react'
+import DeliveryMap from 'src/components/DeliveryMap/DeliveryMap'
 
 const AdminOrdersPage = () => {
   const [orders, setOrders] = useState<any[]>([])
@@ -263,6 +264,18 @@ const AdminOrdersPage = () => {
                   <span>Total</span>
                   <span>₦{selectedOrder.total?.toLocaleString() || '0'}</span>
                 </div>
+              </div>
+
+              <div className="mt-4">
+                <p className="mb-2 text-xs font-bold uppercase tracking-wider text-red-600">Customer Live Location</p>
+                {selectedOrder.latitude && selectedOrder.longitude ? (
+                  <DeliveryMap
+                    latitude={selectedOrder.latitude}
+                    longitude={selectedOrder.longitude}
+                  />
+                ) : (
+                  <p className="text-sm text-gray-400">No location shared for this order.</p>
+                )}
               </div>
             </div>
           </div>
