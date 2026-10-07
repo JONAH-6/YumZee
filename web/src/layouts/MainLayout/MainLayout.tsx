@@ -81,6 +81,8 @@ const MainLayout = ({ children }) => {
             ? 'Notifications'
             : pathname === '/basket'
               ? 'Basket'
+              : pathname === '/checkout'
+                ? 'Checkout'
               : pathname === '/brand'
                 ? 'Brand'
                 : pathname.startsWith('/product/')

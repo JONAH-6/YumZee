@@ -4,9 +4,6 @@ import { useCart } from 'src/components/CartContext/CartContext'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
 import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
 import { Trash2, ChevronLeft, Users, X, MapPin, Pencil, Check } from 'lucide-react'
-import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
-import { db } from 'src/lib/firebase'
-import { useAuth } from 'src/contexts/AuthContexts'
 import DeliveryMap, {
   reverseGeocode,
   EMPTY_ADDRESS,
@@ -15,7 +12,6 @@ import DeliveryMap, {
 
 const BasketPage = () => {
   const { cart, removeFromCart, updateQuantity, totalPrice, addToCart } = useCart()
-  const { user } = useAuth()
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
   const [groupCodeInput, setGroupCodeInput] = useState('')
   const [isGroupActive, setIsGroupActive] = useState(false)
@@ -121,79 +117,40 @@ const BasketPage = () => {
     setIsGroupModalOpen(false)
   }
 
-  const handlePlaceOrder = async () => {
+  // Basket only collects the order — Checkout takes payment, then saves it.
+  // Snapshot passed same-tab via sessionStorage (order itself still lives in Firestore).
+  const handlePlaceOrder = () => {
     if (cart.length === 0) return
-    setIsPlacingOrder(true)
-    try {
-      // 🔥 Fetch user's phone from their Profile
-      let userPhone = ''
-      if (user?.uid) {
-        try {
-          const profileDoc = await getDoc(doc(db, 'profiles', user.uid))
-          if (profileDoc.exists()) {
-            userPhone = profileDoc.data().phone || ''
-          }
-        } catch (err) {
-          console.error('Could not load phone from profile:', err)
-        }
-      }
 
-      // Final Glovo-style address: "Street, Number, near Junction, Area, City, State"
-      const finalHouseNumber = houseNumber.trim() || address.houseNumber
-      const finalStreet =
-        address.street + (finalHouseNumber ? `, ${finalHouseNumber}` : '')
-      const finalAddress = [
-        finalStreet,
-        junction.trim() ? `near ${junction.trim()}` : '',
-        address.area,
-        address.city,
-        address.state,
-      ]
-        .filter(Boolean)
-        .join(', ')
+    // Final Glovo-style address: "Street, Number, near Junction, Area, City, State"
+    const finalHouseNumber = houseNumber.trim() || address.houseNumber
+    const finalStreet =
+      address.street + (finalHouseNumber ? `, ${finalHouseNumber}` : '')
+    const finalAddress = [
+      finalStreet,
+      junction.trim() ? `near ${junction.trim()}` : '',
+      address.area,
+      address.city,
+      address.state,
+    ]
+      .filter(Boolean)
+      .join(', ')
 
-      await addDoc(collection(db, 'orders'), {
-        customerName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
-        customerEmail: user?.email || '',
-        customerPhone: userPhone, // 🔥 NEW
-        items: cart.map((item) => ({
-          id: item.id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity,
-          image: item.image,
-        })),
-        subtotal: totalPrice,
-        deliveryFee: deliveryFee,
-        total: total,
-        groupActive: isGroupActive,
-        groupCode: inviteCode,
-        isCompleted: false, // 🔥 NEW - Shows in "Orders" tab, not "Completed"
-        createdAt: serverTimestamp(),
-        latitude: latitude, // Customer live location for admin map
-        longitude: longitude,
-        street: address.street,
+    sessionStorage.setItem(
+      'yumzee_checkout',
+      JSON.stringify({
+        deliveryFee,
+        total,
+        address: { ...address, fullAddress: finalAddress },
+        latitude,
+        longitude,
         houseNumber: finalHouseNumber,
         junction: junction.trim(),
-        area: address.area,
-        city: address.city,
-        state: address.state,
-        fullAddress: finalAddress,
+        isGroupActive,
+        inviteCode,
       })
-
-      // Personal notification: only this user sees it (filtered by targetEmail)
-      await addDoc(collection(db, 'notifications'), {
-        title: 'Order Placed Successfully!',
-        body: `Your order of ₦${total.toLocaleString()} has been received. We'll get it to you soon!`,
-        targetEmail: user?.email || '',
-        createdAt: serverTimestamp(),
-      })
-      navigate('/orders')
-    } catch (error) {
-      console.error('Error placing order:', error)
-    } finally {
-      setIsPlacingOrder(false)
-    }
+    )
+    navigate(routes.checkout())
   }
 
   return (

@@ -7,6 +7,7 @@ import HomePage from 'src/pages/HomePage/HomePage'
 import SearchPage from 'src/pages/SearchPage/SearchPage'
 import ProductDetailPage from 'src/pages/ProductDetailPage/ProductDetailPage'
 import BasketPage from 'src/pages/BasketPage/BasketPage'
+import CheckoutPage from 'src/pages/CheckoutPage/CheckoutPage'
 import OrdersPage from 'src/pages/OrdersPage/OrdersPage'
 import ProfilePage from 'src/pages/ProfilePage/ProfilePage'
 import NotificationsPage from 'src/pages/NotificationsPage/NotificationsPage'
@@ -35,6 +36,7 @@ const Routes = () => {
           <Route path="/search" page={SearchPage} name="search" />
           <Route path="/product/{id}" page={ProductDetailPage} name="productDetail" />
           <Route path="/basket" page={BasketPage} name="basket" />
+          <Route path="/checkout" page={CheckoutPage} name="checkout" />
           <Route path="/orders" page={OrdersPage} name="orders" />
           <Route path="/profile" page={ProfilePage} name="profile" />
           <Route path="/notifications" page={NotificationsPage} name="notifications" />
