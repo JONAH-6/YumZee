@@ -268,6 +268,18 @@ const AdminOrdersPage = () => {
 
               <div className="mt-4">
                 <p className="mb-2 text-xs font-bold uppercase tracking-wider text-red-600">Customer Live Location</p>
+                {(selectedOrder.street || selectedOrder.area || selectedOrder.city) && (
+                  <div className="mb-2 rounded-lg bg-red-50 p-3 text-sm">
+                    {selectedOrder.street && (
+                      <p className="font-bold text-gray-800">{selectedOrder.street}</p>
+                    )}
+                    <p className="text-gray-600">
+                      {[selectedOrder.area, selectedOrder.city, selectedOrder.state]
+                        .filter(Boolean)
+                        .join(', ')}
+                    </p>
+                  </div>
+                )}
                 {selectedOrder.latitude && selectedOrder.longitude ? (
                   <DeliveryMap
                     latitude={selectedOrder.latitude}

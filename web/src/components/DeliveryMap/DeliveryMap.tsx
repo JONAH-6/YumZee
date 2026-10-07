@@ -1,4 +1,11 @@
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import { useEffect, useRef } from 'react'
+import {
+  MapContainer,
+  TileLayer,
+  Marker,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
 
@@ -12,10 +19,61 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
 })
 
+export interface AddressDetails {
+  street: string
+  area: string
+  city: string
+  state: string
+  fullAddress: string
+}
+
+export const EMPTY_ADDRESS: AddressDetails = {
+  street: '',
+  area: '',
+  city: '',
+  state: '',
+  fullAddress: '',
+}
+
+// Free reverse geocoding (OpenStreetMap Nominatim, no key needed)
+export const reverseGeocode = async (
+  lat: number,
+  lng: number
+): Promise<AddressDetails> => {
+  try {
+    const res = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`,
+      { headers: { 'Accept-Language': 'en' } }
+    )
+    const data = await res.json()
+    const addr = data.address || {}
+    return {
+      street: addr.road || addr.pedestrian || addr.footway || addr.path || '',
+      area:
+        addr.suburb ||
+        addr.neighbourhood ||
+        addr.residential ||
+        addr.village ||
+        addr.hamlet ||
+        '',
+      city: addr.city || addr.town || addr.county || '',
+      state: addr.state || addr.region || '',
+      fullAddress: data.display_name || '',
+    }
+  } catch (error) {
+    console.error('Reverse geocoding failed:', error)
+    return { ...EMPTY_ADDRESS }
+  }
+}
+
 interface Props {
   latitude: number
   longitude: number
-  onLocationChange?: (lat: number, lng: number) => void
+  onLocationChange?: (
+    lat: number,
+    lng: number,
+    address: AddressDetails
+  ) => void
   interactive?: boolean
 }
 
@@ -23,16 +81,34 @@ const LocationMarker = ({
   onLocationChange,
   interactive,
 }: {
-  onLocationChange?: (lat: number, lng: number) => void
+  onLocationChange?: Props['onLocationChange']
   interactive?: boolean
 }) => {
+  const map = useMap()
+  const requestId = useRef(0)
+
   useMapEvents({
-    click(e) {
-      if (interactive && onLocationChange) {
-        onLocationChange(e.latlng.lat, e.latlng.lng)
+    async click(e) {
+      if (!interactive || !onLocationChange) return
+      const { lat, lng } = e.latlng
+      const myRequest = ++requestId.current
+      map.flyTo([lat, lng], Math.max(map.getZoom(), 16), { duration: 0.5 })
+      const address = await reverseGeocode(lat, lng)
+      // Ignore stale responses if the user tapped again
+      if (myRequest === requestId.current) {
+        onLocationChange(lat, lng, address)
       }
     },
   })
+  return null
+}
+
+// Recenters the map when GPS / button updates the coordinates
+const MapUpdater = ({ lat, lng }: { lat: number; lng: number }) => {
+  const map = useMap()
+  useEffect(() => {
+    map.setView([lat, lng], map.getZoom())
+  }, [lat, lng, map])
   return null
 }
 
@@ -55,6 +131,7 @@ const DeliveryMap = ({
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         <Marker position={[latitude, longitude]} />
+        <MapUpdater lat={latitude} lng={longitude} />
         <LocationMarker
           onLocationChange={onLocationChange}
           interactive={interactive}

@@ -7,7 +7,11 @@ import { Trash2, ChevronLeft, Users, X, MapPin } from 'lucide-react'
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
 import { db } from 'src/lib/firebase'
 import { useAuth } from 'src/contexts/AuthContexts'
-import DeliveryMap from 'src/components/DeliveryMap/DeliveryMap'
+import DeliveryMap, {
+  reverseGeocode,
+  EMPTY_ADDRESS,
+  type AddressDetails,
+} from 'src/components/DeliveryMap/DeliveryMap'
 
 const BasketPage = () => {
   const { cart, removeFromCart, updateQuantity, totalPrice, addToCart } = useCart()
@@ -20,6 +24,15 @@ const BasketPage = () => {
   const [latitude, setLatitude] = useState(6.5244) // Default: Lagos
   const [longitude, setLongitude] = useState(3.3792)
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'ok' | 'denied'>('idle')
+  const [address, setAddress] = useState<AddressDetails>({ ...EMPTY_ADDRESS })
+  const [lookingUp, setLookingUp] = useState(false)
+
+  const lookupAddress = async (lat: number, lng: number) => {
+    setLookingUp(true)
+    const found = await reverseGeocode(lat, lng)
+    setAddress(found)
+    setLookingUp(false)
+  }
 
   // Ask for location permission when checkout opens
   const requestLocation = () => {
@@ -30,9 +43,12 @@ const BasketPage = () => {
     setLocStatus('locating')
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        setLatitude(pos.coords.latitude)
-        setLongitude(pos.coords.longitude)
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        setLatitude(lat)
+        setLongitude(lng)
         setLocStatus('ok')
+        lookupAddress(lat, lng)
       },
       () => setLocStatus('denied'),
       { enableHighAccuracy: true, timeout: 10000 }
@@ -106,6 +122,11 @@ const BasketPage = () => {
         createdAt: serverTimestamp(),
         latitude: latitude, // Customer live location for admin map
         longitude: longitude,
+        street: address.street,
+        area: address.area,
+        city: address.city,
+        state: address.state,
+        fullAddress: address.fullAddress,
       })
 
       // Personal notification: only this user sees it (filtered by targetEmail)
@@ -194,13 +215,35 @@ const BasketPage = () => {
             <DeliveryMap
               latitude={latitude}
               longitude={longitude}
-              onLocationChange={(lat, lng) => {
+              onLocationChange={(lat, lng, addr) => {
                 setLatitude(lat)
                 setLongitude(lng)
+                setAddress(addr)
                 setLocStatus('ok')
               }}
               interactive
             />
+            {/* Auto-detected address, Glovo style */}
+            <div className="mt-2 rounded-xl bg-[#F5F1FB] p-3 text-sm">
+              {lookingUp ? (
+                <p className="text-[#6F6B76]">Detecting your address...</p>
+              ) : address.street || address.area || address.city ? (
+                <>
+                  {address.street && (
+                    <p className="font-bold text-[#211F26]">{address.street}</p>
+                  )}
+                  <p className="text-[#6F6B76]">
+                    {[address.area, address.city, address.state]
+                      .filter(Boolean)
+                      .join(', ')}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[#6F6B76]">
+                  Tap the map or use your current location to detect your address.
+                </p>
+              )}
+            </div>
             <button type="button" onClick={requestLocation} disabled={locStatus === 'locating'} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white disabled:opacity-50">
               <MapPin className="h-4 w-4" /> {locStatus === 'locating' ? 'Locating...' : locStatus === 'ok' ? 'Use My Current Location Again' : 'Use My Current Location'}
             </button>
