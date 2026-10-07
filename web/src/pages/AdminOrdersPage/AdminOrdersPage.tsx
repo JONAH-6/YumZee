@@ -3,7 +3,7 @@ import { Metadata } from '@redwoodjs/web'
 import { db } from 'src/lib/firebase'
 import { collection, onSnapshot, doc, updateDoc, serverTimestamp } from 'firebase/firestore'
 import { useEffect, useState } from 'react'
-import { ArrowLeft, ShoppingBag, Clock, MoreVertical, Eye, X, Check, Phone, Mail, Home } from 'lucide-react'
+import { ArrowLeft, ShoppingBag, Clock, MoreVertical, Eye, X, Check, Phone, Mail, MapPin } from 'lucide-react'
 import DeliveryMap from 'src/components/DeliveryMap/DeliveryMap'
 
 const AdminOrdersPage = () => {
@@ -231,10 +231,9 @@ const AdminOrdersPage = () => {
                 <p className="flex items-center gap-2 text-sm text-gray-600 break-all">
                   <Mail className="h-4 w-4 text-red-500" /> {selectedOrder.customerEmail || 'No email'}
                 </p>
-                {(selectedOrder.buildingType || selectedOrder.junction) && (
+                {selectedOrder.junction && (
                   <p className="flex items-center gap-2 text-sm text-gray-600">
-                    <Home className="h-4 w-4 text-red-500" /> {selectedOrder.buildingType || 'House'}
-                    {selectedOrder.junction ? ` — near ${selectedOrder.junction}` : ''}
+                    <MapPin className="h-4 w-4 text-red-500" /> Near {selectedOrder.junction}
                   </p>
                 )}
                 <p className="flex items-center gap-2 text-xs text-gray-400">

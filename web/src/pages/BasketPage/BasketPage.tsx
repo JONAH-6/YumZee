@@ -3,7 +3,7 @@ import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
 import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
-import { Trash2, ChevronLeft, Users, X, MapPin, Pencil, Check, Home, Building2, Briefcase, MoreHorizontal } from 'lucide-react'
+import { Trash2, ChevronLeft, Users, X, MapPin, Pencil, Check } from 'lucide-react'
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
 import { db } from 'src/lib/firebase'
 import { useAuth } from 'src/contexts/AuthContexts'
@@ -12,15 +12,6 @@ import DeliveryMap, {
   EMPTY_ADDRESS,
   type AddressDetails,
 } from 'src/components/DeliveryMap/DeliveryMap'
-
-const BUILDING_TYPES = [
-  { label: 'House', Icon: Home },
-  { label: 'Apartment', Icon: Building2 },
-  { label: 'Office', Icon: Briefcase },
-  { label: 'Other', Icon: MoreHorizontal },
-] as const
-
-type BuildingType = (typeof BUILDING_TYPES)[number]['label']
 
 const BasketPage = () => {
   const { cart, removeFromCart, updateQuantity, totalPrice, addToCart } = useCart()
@@ -39,7 +30,6 @@ const BasketPage = () => {
   const [editedAddress, setEditedAddress] = useState<AddressDetails>({ ...EMPTY_ADDRESS })
   const [houseNumber, setHouseNumber] = useState('')
   const [junction, setJunction] = useState('')
-  const [buildingType, setBuildingType] = useState<BuildingType>('House')
 
   // Keep the edit fields in sync while the map auto-detects
   useEffect(() => {
@@ -185,7 +175,6 @@ const BasketPage = () => {
         street: address.street,
         houseNumber: finalHouseNumber,
         junction: junction.trim(),
-        buildingType: buildingType,
         area: address.area,
         city: address.city,
         state: address.state,
@@ -393,29 +382,8 @@ const BasketPage = () => {
 
         {cart.length > 0 && (
           <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4" style={{ animationDelay: '0.33s' }}>
-            <p className="text-base font-black text-[#211F26]">Choose your building type</p>
-            <p className="mb-3 text-xs text-[#6F6B76]">This lets our riders know exactly where to deliver</p>
-            <div className="grid grid-cols-2 gap-3">
-              {BUILDING_TYPES.map(({ label, Icon }) => {
-                const isActive = buildingType === label
-                return (
-                  <button
-                    key={label}
-                    type="button"
-                    onClick={() => setBuildingType(label)}
-                    className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition active:scale-95 ${
-                      isActive ? 'border-[#3E2679] bg-[#F5F1FB]' : 'border-[#E9E5EE] bg-white hover:border-[#3E2679]/40'
-                    }`}
-                  >
-                    <Icon className={`h-6 w-6 ${isActive ? 'text-[#3E2679]' : 'text-[#6F6B76]'}`} />
-                    <span className={`text-sm font-bold ${isActive ? 'text-[#3E2679]' : 'text-[#211F26]'}`}>
-                      {label}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-            <div className="mt-4 space-y-3">
+            <p className="mb-3 text-base font-black text-[#211F26]">Confirm your delivery details</p>
+            <div className="space-y-3">
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#6F6B76]">
                   House / Flat Number <span className="text-red-500">*</span>
