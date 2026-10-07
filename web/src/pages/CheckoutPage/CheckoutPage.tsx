@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { navigate, routes } from '@redwoodjs/router'
 import { Metadata } from '@redwoodjs/web'
-import { ChevronLeft, Lock, Loader2, ShieldCheck } from 'lucide-react'
+import { ChevronLeft, Lock, Loader2, ShieldCheck, AlertCircle } from 'lucide-react'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { useAuth } from 'src/contexts/AuthContexts'
 import { db } from 'src/lib/firebase'
@@ -21,6 +21,10 @@ const CheckoutPage = () => {
   const { user } = useAuth()
   const [isPaying, setIsPaying] = useState(false)
   const [checkoutData, setCheckoutData] = useState<any>(null)
+  const [paystackReady, setPaystackReady] = useState(
+    () => typeof window !== 'undefined' && typeof window.PaystackPop !== 'undefined'
+  )
+  const [loadError, setLoadError] = useState('')
 
   // Snapshot passed from Basket (same-tab only, never leaves the device)
   useEffect(() => {
@@ -31,6 +35,34 @@ const CheckoutPage = () => {
       } catch (err) {
         console.error('Failed to parse checkout data:', err)
       }
+    }
+  }, [])
+
+  // Load Paystack directly (survives cached index.html + shows real status)
+  useEffect(() => {
+    if (typeof window.PaystackPop !== 'undefined') {
+      setPaystackReady(true)
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://js.paystack.co/v1/inline.js'
+    script.async = true
+    script.onload = () => {
+      setTimeout(() => {
+        if (typeof window.PaystackPop !== 'undefined') {
+          setPaystackReady(true)
+          setLoadError('')
+        } else {
+          setLoadError('Paystack loaded but did not start. Disable any ad-blocker for this site and refresh.')
+        }
+      }, 500)
+    }
+    script.onerror = () => {
+      setLoadError('Paystack could not load. Check your connection or disable any ad-blocker, then refresh.')
+    }
+    document.body.appendChild(script)
+    return () => {
+      document.body.removeChild(script)
     }
   }, [])
 
@@ -67,8 +99,8 @@ const CheckoutPage = () => {
       return
     }
 
-    if (typeof window.PaystackPop === 'undefined') {
-      alert('Payment system is still loading. Please wait a moment and try again.')
+    if (typeof window.PaystackPop === 'undefined' || !paystackReady) {
+      alert('Payment system is still loading. Wait a few seconds and try again.')
       return
     }
 
@@ -249,6 +281,19 @@ const CheckoutPage = () => {
           </div>
         </div>
 
+        {/* Payment system status */}
+        {loadError ? (
+          <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-600" />
+            <p className="text-xs text-red-700">{loadError}</p>
+          </div>
+        ) : !paystackReady ? (
+          <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+            <Loader2 className="h-4 w-4 animate-spin text-amber-600" />
+            <p className="text-xs text-amber-700">Loading payment system...</p>
+          </div>
+        ) : null}
+
         {/* Security Note */}
         <div className="flex items-center gap-2 rounded-xl bg-[#F5F1FB] p-3">
           <ShieldCheck className="h-4 w-4 shrink-0 text-[#3E2679]" />
@@ -264,12 +309,16 @@ const CheckoutPage = () => {
         <div className="w-full max-w-md bg-gradient-to-t from-[#FFF9E5] via-[#FFF9E5]/95 to-transparent px-4 pb-3 pt-6">
           <button
             onClick={handlePay}
-            disabled={isPaying}
+            disabled={isPaying || !paystackReady}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-[#3E2679] py-5 text-base font-black text-white transition hover:bg-[#2A1A4E] active:scale-[0.98] disabled:opacity-50"
           >
             {isPaying ? (
               <>
                 <Loader2 className="h-5 w-5 animate-spin" /> Processing...
+              </>
+            ) : !paystackReady ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin" /> Loading...
               </>
             ) : (
               <>
