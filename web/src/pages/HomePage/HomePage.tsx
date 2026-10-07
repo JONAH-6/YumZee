@@ -134,7 +134,7 @@ const HomePage = () => {
         <div className="flex flex-col space-y-2">
           {filteredProducts.length === 0 ? (
             <div className="border border-white/70 bg-white/60 p-6 text-center backdrop-blur-md">
-              <p className="text-sm text-[#6F6B76]">No snacks available yet.</p>
+              <p className="text-sm text-[#6F6B76]">coming soon</p>
             </div>
           ) : (
             filteredProducts.map((product, index) => (
