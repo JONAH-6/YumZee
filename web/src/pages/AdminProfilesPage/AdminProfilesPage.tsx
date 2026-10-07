@@ -95,7 +95,13 @@ const AdminProfilesPage = () => {
                     </button>
 
                     {openMenuId === profile.id && (
-                      <div className="absolute right-0 top-8 z-10 w-36 rounded-lg border border-red-200 bg-white p-1">
+                      <div className="absolute right-0 top-8 z-10 w-44 rounded-lg border border-red-200 bg-white p-1">
+                        <button
+                          onClick={() => { setOpenMenuId(null); navigate(routes.adminUserDetail({ id: profile.id })) }}
+                          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-bold text-gray-700 hover:bg-red-50"
+                        >
+                          <Eye className="h-4 w-4 text-red-600" /> View Full Activity
+                        </button>
                         <button
                           onClick={() => { setSelectedProfile(profile); setOpenMenuId(null); }}
                           className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-bold text-gray-700 hover:bg-red-50"

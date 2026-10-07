@@ -22,6 +22,7 @@ import AdminOrdersPage from 'src/pages/AdminOrdersPage/AdminOrdersPage'
 import AdminProductsPage from 'src/pages/AdminProductsPage/AdminProductsPage'
 import AdminLoggedInUsersPage from 'src/pages/AdminLoggedInUsersPage/AdminLoggedInUsersPage'
 import AdminProfilesPage from 'src/pages/AdminProfilesPage/AdminProfilesPage'
+import AdminUserDetailPage from 'src/pages/AdminUserDetailPage/AdminUserDetailPage'
 import AdminHelpPage from 'src/pages/AdminHelpPage/AdminHelpPage'
 import AdminNotificationsPage from 'src/pages/AdminNotificationsPage/AdminNotificationsPage'
 
@@ -54,6 +55,7 @@ const Routes = () => {
       <Route path="/admin/products" page={AdminProductsPage} name="adminProducts" />
       <Route path="/admin/users" page={AdminLoggedInUsersPage} name="adminLoggedInUsers" />
       <Route path="/admin/profiles" page={AdminProfilesPage} name="adminProfiles" />
+      <Route path="/admin/user/{id}" page={AdminUserDetailPage} name="adminUserDetail" />
       <Route path="/admin/help" page={AdminHelpPage} name="adminHelp" />
       <Route path="/admin/notifications" page={AdminNotificationsPage} name="adminNotifications" />
 
