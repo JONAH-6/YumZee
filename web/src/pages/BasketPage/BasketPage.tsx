@@ -3,7 +3,7 @@ import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
 import { INITIAL_PRODUCTS } from 'src/lib/orderStore'
-import { Trash2, ChevronLeft, Users, X, MapPin, Pencil, Check } from 'lucide-react'
+import { Trash2, ChevronLeft, Users, X, MapPin, Pencil, Check, Home, Building2, Briefcase, MoreHorizontal } from 'lucide-react'
 import { collection, addDoc, serverTimestamp, doc, getDoc } from 'firebase/firestore'
 import { db } from 'src/lib/firebase'
 import { useAuth } from 'src/contexts/AuthContexts'
@@ -12,6 +12,15 @@ import DeliveryMap, {
   EMPTY_ADDRESS,
   type AddressDetails,
 } from 'src/components/DeliveryMap/DeliveryMap'
+
+const BUILDING_TYPES = [
+  { label: 'House', Icon: Home },
+  { label: 'Apartment', Icon: Building2 },
+  { label: 'Office', Icon: Briefcase },
+  { label: 'Other', Icon: MoreHorizontal },
+] as const
+
+type BuildingType = (typeof BUILDING_TYPES)[number]['label']
 
 const BasketPage = () => {
   const { cart, removeFromCart, updateQuantity, totalPrice, addToCart } = useCart()
@@ -28,6 +37,9 @@ const BasketPage = () => {
   const [lookingUp, setLookingUp] = useState(false)
   const [isEditingAddress, setIsEditingAddress] = useState(false)
   const [editedAddress, setEditedAddress] = useState<AddressDetails>({ ...EMPTY_ADDRESS })
+  const [houseNumber, setHouseNumber] = useState('')
+  const [junction, setJunction] = useState('')
+  const [buildingType, setBuildingType] = useState<BuildingType>('House')
 
   // Keep the edit fields in sync while the map auto-detects
   useEffect(() => {
@@ -88,6 +100,7 @@ const BasketPage = () => {
       .filter(Boolean)
       .join(', ')
     setAddress({ ...editedAddress, fullAddress: combined || editedAddress.fullAddress })
+    setHouseNumber(editedAddress.houseNumber || '')
     setIsEditingAddress(false)
   }
 
@@ -135,6 +148,20 @@ const BasketPage = () => {
         }
       }
 
+      // Final Glovo-style address: "Street, Number, near Junction, Area, City, State"
+      const finalHouseNumber = houseNumber.trim() || address.houseNumber
+      const finalStreet =
+        address.street + (finalHouseNumber ? `, ${finalHouseNumber}` : '')
+      const finalAddress = [
+        finalStreet,
+        junction.trim() ? `near ${junction.trim()}` : '',
+        address.area,
+        address.city,
+        address.state,
+      ]
+        .filter(Boolean)
+        .join(', ')
+
       await addDoc(collection(db, 'orders'), {
         customerName: user?.displayName || user?.email?.split('@')[0] || 'Customer',
         customerEmail: user?.email || '',
@@ -156,11 +183,13 @@ const BasketPage = () => {
         latitude: latitude, // Customer live location for admin map
         longitude: longitude,
         street: address.street,
-        houseNumber: address.houseNumber,
+        houseNumber: finalHouseNumber,
+        junction: junction.trim(),
+        buildingType: buildingType,
         area: address.area,
         city: address.city,
         state: address.state,
-        fullAddress: address.fullAddress,
+        fullAddress: finalAddress,
       })
 
       // Personal notification: only this user sees it (filtered by targetEmail)
@@ -363,6 +392,77 @@ const BasketPage = () => {
         )}
 
         {cart.length > 0 && (
+          <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4" style={{ animationDelay: '0.33s' }}>
+            <p className="text-base font-black text-[#211F26]">Choose your building type</p>
+            <p className="mb-3 text-xs text-[#6F6B76]">This lets our riders know exactly where to deliver</p>
+            <div className="grid grid-cols-2 gap-3">
+              {BUILDING_TYPES.map(({ label, Icon }) => {
+                const isActive = buildingType === label
+                return (
+                  <button
+                    key={label}
+                    type="button"
+                    onClick={() => setBuildingType(label)}
+                    className={`flex items-center gap-3 rounded-2xl border-2 p-4 text-left transition active:scale-95 ${
+                      isActive ? 'border-[#3E2679] bg-[#F5F1FB]' : 'border-[#E9E5EE] bg-white hover:border-[#3E2679]/40'
+                    }`}
+                  >
+                    <Icon className={`h-6 w-6 ${isActive ? 'text-[#3E2679]' : 'text-[#6F6B76]'}`} />
+                    <span className={`text-sm font-bold ${isActive ? 'text-[#3E2679]' : 'text-[#211F26]'}`}>
+                      {label}
+                    </span>
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-4 space-y-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#6F6B76]">
+                  House / Flat Number <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={houseNumber}
+                  onChange={(e) => setHouseNumber(e.target.value)}
+                  placeholder="e.g. 15"
+                  className="w-full rounded-xl border border-[#E9E5EE] bg-[#FAF8FD] px-4 py-3 text-sm font-medium text-[#211F26] placeholder-[#A09BA8] outline-none focus:border-[#3E2679]"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#6F6B76]">
+                  Nearest Junction / Landmark
+                </label>
+                <input
+                  type="text"
+                  value={junction}
+                  onChange={(e) => setJunction(e.target.value)}
+                  placeholder="e.g. Near Yaba Junction"
+                  className="w-full rounded-xl border border-[#E9E5EE] bg-[#FAF8FD] px-4 py-3 text-sm font-medium text-[#211F26] placeholder-[#A09BA8] outline-none focus:border-[#3E2679]"
+                />
+              </div>
+            </div>
+            {address.street ? (
+              <div className="mt-4 rounded-xl border border-[#FFC107] bg-[#FFFBEF] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-[#3E2679]">
+                  Final Address Preview
+                </p>
+                <p className="mt-1 text-sm font-bold text-[#211F26]">
+                  {address.street}
+                  {(houseNumber.trim() || address.houseNumber) &&
+                    `, ${houseNumber.trim() || address.houseNumber}`}
+                </p>
+                {junction.trim() && (
+                  <p className="text-xs text-[#6F6B76]">near {junction.trim()}</p>
+                )}
+                <p className="text-xs text-[#6F6B76]">
+                  {[address.area, address.city, address.state].filter(Boolean).join(', ')}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        )}
+
+        {cart.length > 0 && (
           <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5" style={{ animationDelay: '0.35s' }}>
             <div className="flex justify-between text-sm mb-2">
               <span className="text-[#6F6B76]">Basket Subtotal</span>
@@ -382,8 +482,8 @@ const BasketPage = () => {
         {cart.length > 0 && (
           <div className="fixed bottom-16 left-0 right-0 z-30 flex justify-center">
             <div className="anim-fade-up w-full max-w-md bg-gradient-to-t from-[#FFF9E5] via-[#FFF9E5]/95 to-transparent px-4 pb-3 pt-6" style={{ animationDelay: '0.45s' }}>
-              <button onClick={handlePlaceOrder} disabled={isPlacingOrder} className="w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black transition hover:bg-[#e6ad00] active:scale-[0.98] disabled:opacity-50">
-                {isPlacingOrder ? 'Placing Order...' : 'Place Order'}
+              <button onClick={handlePlaceOrder} disabled={isPlacingOrder || !houseNumber.trim()} className="w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black transition hover:bg-[#e6ad00] active:scale-[0.98] disabled:opacity-50">
+                {isPlacingOrder ? 'Placing Order...' : !houseNumber.trim() ? 'Add House Number to Continue' : 'Place Order'}
               </button>
             </div>
           </div>
