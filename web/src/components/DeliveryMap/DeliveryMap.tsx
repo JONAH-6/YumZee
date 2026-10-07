@@ -22,6 +22,7 @@ L.Icon.Default.mergeOptions({
 })
 
 export interface AddressDetails {
+  houseNumber: string
   street: string
   area: string
   city: string
@@ -30,6 +31,7 @@ export interface AddressDetails {
 }
 
 export const EMPTY_ADDRESS: AddressDetails = {
+  houseNumber: '',
   street: '',
   area: '',
   city: '',
@@ -50,7 +52,18 @@ export const reverseGeocode = async (
     const data = await res.json()
     const addr = data.address || {}
     return {
-      street: addr.road || addr.pedestrian || addr.footway || addr.path || '',
+      houseNumber: addr.house_number || '',
+      street:
+        addr.road ||
+        addr.street ||
+        addr.pedestrian ||
+        addr.footway ||
+        addr.path ||
+        addr.cycleway ||
+        addr.residential ||
+        addr.living_street ||
+        addr.service ||
+        '',
       area:
         addr.suburb ||
         addr.neighbourhood ||

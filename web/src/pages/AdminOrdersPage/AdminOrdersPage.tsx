@@ -271,7 +271,10 @@ const AdminOrdersPage = () => {
                 {(selectedOrder.street || selectedOrder.area || selectedOrder.city) && (
                   <div className="mb-2 rounded-lg bg-red-50 p-3 text-sm">
                     {selectedOrder.street && (
-                      <p className="font-bold text-gray-800">{selectedOrder.street}</p>
+                      <p className="font-bold text-gray-800">
+                        {selectedOrder.street}
+                        {selectedOrder.houseNumber ? `, ${selectedOrder.houseNumber}` : ''}
+                      </p>
                     )}
                     <p className="text-gray-600">
                       {[selectedOrder.area, selectedOrder.city, selectedOrder.state]

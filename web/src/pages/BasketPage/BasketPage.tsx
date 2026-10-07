@@ -79,7 +79,8 @@ const BasketPage = () => {
 
   const saveEditedAddress = () => {
     const combined = [
-      editedAddress.street,
+      editedAddress.street +
+        (editedAddress.houseNumber ? `, ${editedAddress.houseNumber}` : ''),
       editedAddress.area,
       editedAddress.city,
       editedAddress.state,
@@ -155,6 +156,7 @@ const BasketPage = () => {
         latitude: latitude, // Customer live location for admin map
         longitude: longitude,
         street: address.street,
+        houseNumber: address.houseNumber,
         area: address.area,
         city: address.city,
         state: address.state,
@@ -256,7 +258,7 @@ const BasketPage = () => {
               interactive
               addressLabel={
                 address.street
-                  ? `${address.street}, ${[address.area, address.city].filter(Boolean).join(', ')}`
+                  ? `${address.street}${address.houseNumber ? `, ${address.houseNumber}` : ''}, ${[address.area, address.city].filter(Boolean).join(', ')}`
                   : 'Your delivery point'
               }
             />
@@ -282,6 +284,13 @@ const BasketPage = () => {
                     value={editedAddress.street}
                     onChange={(e) => setEditedAddress({ ...editedAddress, street: e.target.value })}
                     placeholder="Street name"
+                    className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
+                  />
+                  <input
+                    type="text"
+                    value={editedAddress.houseNumber}
+                    onChange={(e) => setEditedAddress({ ...editedAddress, houseNumber: e.target.value })}
+                    placeholder="House / Flat number (e.g. 15)"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
@@ -327,7 +336,10 @@ const BasketPage = () => {
               ) : address.street || address.area || address.city ? (
                 <div className="pr-8">
                   {address.street && (
-                    <p className="font-bold text-[#211F26]">{address.street}</p>
+                    <p className="font-bold text-[#211F26]">
+                      {address.street}
+                      {address.houseNumber ? `, ${address.houseNumber}` : ''}
+                    </p>
                   )}
                   <p className="text-[#6F6B76]">
                     {[address.area, address.city, address.state]
