@@ -78,6 +78,14 @@ const BasketPage = () => {
         isCompleted: false, // 🔥 NEW - Shows in "Orders" tab, not "Completed"
         createdAt: serverTimestamp(),
       })
+
+      // Personal notification: only this user sees it (filtered by targetEmail)
+      await addDoc(collection(db, 'notifications'), {
+        title: 'Order Placed Successfully!',
+        body: `Your order of ₦${total.toLocaleString()} has been received. We'll get it to you soon!`,
+        targetEmail: user?.email || '',
+        createdAt: serverTimestamp(),
+      })
       navigate('/orders')
     } catch (error) {
       console.error('Error placing order:', error)

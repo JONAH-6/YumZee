@@ -41,13 +41,16 @@ const MainLayout = ({ children }) => {
     else setShowFloatingCart(false)
   }, [itemCount])
 
-  // Count total notifications
+  // Count total notifications: broadcasts (no targetEmail) + this user's own
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'notifications'), (snap) => {
-      setTotalNotifs(snap.size)
+      const visible = snap.docs
+        .map((d) => d.data() as any)
+        .filter((n) => !n.targetEmail || n.targetEmail === user?.email)
+      setTotalNotifs(visible.length)
     })
     return () => unsub()
-  }, [])
+  }, [user])
 
   // Count how many user has read
   useEffect(() => {

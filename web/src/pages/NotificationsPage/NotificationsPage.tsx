@@ -13,7 +13,11 @@ const NotificationsPage = () => {
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'notifications'), (snap) => {
-      const data = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[]
+      const all = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[]
+      // Broadcasts (no targetEmail) + notifications for THIS user only
+      const data = all.filter(
+        (n) => !n.targetEmail || n.targetEmail === user?.email
+      )
       data.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
       setNotifications(data)
       setLoading(false)
