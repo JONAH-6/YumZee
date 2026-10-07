@@ -74,7 +74,8 @@ const CheckoutPage = () => {
 
     setIsPaying(true)
 
-    const handler = window.PaystackPop.setup({
+    try {
+      const handler = window.PaystackPop.setup({
       key: PAYSTACK_PUBLIC_KEY,
       email: user.email,
       amount: Math.round(total * 100), // Paystack charges in kobo
@@ -168,6 +169,13 @@ const CheckoutPage = () => {
     })
 
     handler.openIframe()
+    } catch (error) {
+      console.error('Paystack failed to start:', error)
+      alert(
+        'Payment could not start. Check your connection, disable any ad-blocker for this site, allow popups, then try again.'
+      )
+      setIsPaying(false)
+    }
   }
 
   return (
