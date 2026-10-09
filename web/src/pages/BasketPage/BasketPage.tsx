@@ -332,7 +332,7 @@ const BasketPage = () => {
               <MapPin className="h-4 w-4" /> {locStatus === 'locating' ? 'Locating...' : locStatus === 'ok' ? 'Use My Current Location Again' : 'Use My Current Location'}
             </button>
             {locStatus === 'denied' && (
-              <p className="mt-1 text-[11px] text-red-500">Location blocked — allow access when asked, or drag the pin on the map.</p>
+              <p className="mt-1 text-[11px] text-red-500">Location blocked turn on your location</p>
             )}
           </div>
         )}
