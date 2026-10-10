@@ -375,12 +375,16 @@ const BasketPage = () => {
               )}
             </div>
 
-            {/* 🔥 BUTTON — only trigger on click */}
+            {/* 🔥 BUTTON — touch fires instantly on phone, click covers desktop */}
             <button
               type="button"
+              onTouchStart={(e) => {
+                e.preventDefault()
+                requestLocation()
+              }}
               onClick={requestLocation}
-              className="mt-2 flex w-full touch-manipulation select-none items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white transition active:scale-95"
-              style={{ WebkitTapHighlightColor: 'transparent' }}
+              className="relative z-10 mt-2 flex w-full touch-manipulation select-none items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-3 text-sm font-bold text-white transition active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent', touchAction: 'manipulation' }}
             >
               <MapPin className="h-4 w-4" />
               {locStatus === 'locating'
