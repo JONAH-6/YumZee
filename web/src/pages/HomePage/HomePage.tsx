@@ -99,12 +99,12 @@ const HomePage = () => {
       <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-[#FFC107]/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 top-1/2 h-80 w-80 rounded-full bg-[#3E2679]/10 blur-3xl" />
       <div className="relative">
-      <div className="flex gap-6 overflow-x-auto scrollbar-hide pb-2 mb-4 border-b border-[#E9E5EE]">
+      <div className="mb-4 flex gap-6 overflow-x-auto border-b border-[#E9E5EE] scrollbar-hide">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`relative whitespace-nowrap pb-2 text-sm font-bold transition-all duration-200 active:scale-95 ${
+            className={`relative -mb-px whitespace-nowrap border-b-2 pb-2 text-sm font-bold transition-all duration-200 active:scale-95 ${
               selectedCategory === cat
                 ? 'text-[#3E2679] border-b-2 border-[#3E2679] scale-105'
                 : 'text-[#6F6B76] border-b-2 border-transparent hover:text-[#3E2679]'
