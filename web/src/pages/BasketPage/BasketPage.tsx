@@ -41,10 +41,14 @@ const BasketPage = () => {
     setLookingUp(false)
   }
 
-  // Silent auto-try on page open (no popups, no alerts).
-  // Works instantly if permission was granted before; otherwise stays quiet
-  // and waits for the user to tap the button (which triggers the popup).
-  const autoRequestLocation = () => {
+  // Simple location request — the BROWSER shows its own permission popup.
+  // Used both automatically on page open and on button tap.
+  const requestLocation = () => {
+    if (!('geolocation' in navigator)) {
+      setLocStatus('denied')
+      return
+    }
+
     setLocStatus('locating')
     navigator.geolocation.getCurrentPosition(
       (pos) => {
@@ -56,67 +60,15 @@ const BasketPage = () => {
         lookupAddress(lat, lng)
       },
       () => {
-        setLocStatus('idle')
-      },
-      { enableHighAccuracy: true, timeout: 8000 }
-    )
-  }
-
-  // Button tap: user gesture, so the browser shows the permission popup.
-  const requestLocation = () => {
-    if (!('geolocation' in navigator)) {
-      alert('Your browser does not support location. Please tap the map to place your pin.')
-      setLocStatus('denied')
-      return
-    }
-    setLocStatus('locating')
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude
-        const lng = pos.coords.longitude
-        setLatitude(lat)
-        setLongitude(lng)
-        setLocStatus('ok')
-        lookupAddress(lat, lng)
-      },
-      (error) => {
-        console.error('Geolocation error:', error)
         setLocStatus('denied')
-        if (error.code === 1) {
-          alert(
-            'Location was blocked. Tap the lock icon in your browser address bar, set Location to Allow, refresh the page — or tap the map to place your pin manually.'
-          )
-        } else {
-          alert('Could not get your location. Please tap the map to place your pin.')
-        }
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     )
   }
 
+  // Auto call on page open — browser pops the permission request itself.
   useEffect(() => {
-    if (!('geolocation' in navigator)) {
-      setLocStatus('denied')
-      return
-    }
-    // Only auto-try when permission is already granted; otherwise the
-    // browser silently ignores it and we wait for the button tap.
-    if ('permissions' in navigator) {
-      navigator.permissions
-        .query({ name: 'geolocation' as PermissionName })
-        .then((result) => {
-          if (result.state === 'granted') {
-            autoRequestLocation()
-          } else if (result.state === 'denied') {
-            setLocStatus('denied')
-          }
-        })
-        .catch(() => {
-          autoRequestLocation()
-        })
-    } else {
-      autoRequestLocation()
-    }
+    requestLocation()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -152,9 +104,7 @@ const BasketPage = () => {
 
   const handleJoinGroup = () => {
     const parsedItems = parseGroupCode(groupCodeInput)
-    if (parsedItems.length === 0) {
-      return
-    }
+    if (parsedItems.length === 0) return
     parsedItems.forEach(({ id, quantity }) => {
       const product = INITIAL_PRODUCTS.find((p) => p.id === id)
       if (product) addToCart(product, quantity)
@@ -170,12 +120,9 @@ const BasketPage = () => {
     setIsGroupModalOpen(false)
   }
 
-  // Basket only collects the order — Checkout takes payment, then saves it.
-  // Snapshot passed same-tab via sessionStorage (order itself still lives in Firestore).
   const handlePlaceOrder = () => {
     if (cart.length === 0) return
 
-    // Final Glovo-style address: "Street, Number, near Junction, Area, City, State"
     const finalHouseNumber = houseNumber.trim() || address.houseNumber
     const finalStreet =
       address.street + (finalHouseNumber ? `, ${finalHouseNumber}` : '')
@@ -273,6 +220,7 @@ const BasketPage = () => {
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-[#6F6B76]">Delivery Location</p>
               {locStatus === 'ok' && <span className="text-[11px] font-bold text-green-600">Location set</span>}
+              {locStatus === 'locating' && <span className="text-[11px] font-bold text-amber-600">Locating...</span>}
             </div>
             <DeliveryMap
               latitude={latitude}
@@ -290,7 +238,6 @@ const BasketPage = () => {
                   : 'Your delivery point'
               }
             />
-            {/* Auto-detected address, Glovo style, with manual edit */}
             <div className="relative mt-2 rounded-xl bg-[#F5F1FB] p-3 text-sm">
               {!isEditingAddress && (
                 <button
@@ -381,12 +328,21 @@ const BasketPage = () => {
                 </p>
               )}
             </div>
-            <button type="button" onClick={requestLocation} disabled={locStatus === 'locating'} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white disabled:opacity-50">
-              <MapPin className="h-4 w-4" /> {locStatus === 'locating' ? 'Locating...' : locStatus === 'ok' ? 'Use My Current Location Again' : 'Use My Current Location'}
+
+            {/* 🔥 BUTTON — browser shows its own permission popup */}
+            <button
+              type="button"
+              onClick={requestLocation}
+              disabled={locStatus === 'locating'}
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
+            >
+              <MapPin className="h-4 w-4" />
+              {locStatus === 'locating'
+                ? 'Getting your location...'
+                : locStatus === 'ok'
+                ? 'Use My Current Location Again'
+                : 'Use My Current Location'}
             </button>
-            {locStatus === 'denied' && (
-              <p className="mt-1 text-[11px] text-red-500">Location blocked turn on your location</p>
-            )}
           </div>
         )}
 
