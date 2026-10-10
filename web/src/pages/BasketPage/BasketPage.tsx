@@ -69,6 +69,46 @@ const BasketPage = () => {
   // Auto call on page open — browser pops the permission request itself.
   useEffect(() => {
     requestLocation()
+
+    // If the user turns location on later (phone settings / site settings),
+    // detect it and fetch WITHOUT needing a refresh.
+    let permissionStatus: PermissionStatus | null = null
+    if ('permissions' in navigator) {
+      navigator.permissions
+        .query({ name: 'geolocation' as PermissionName })
+        .then((status) => {
+          permissionStatus = status
+          status.onchange = () => {
+            if (status.state === 'granted') {
+              requestLocation()
+            }
+          }
+        })
+        .catch(() => {})
+    }
+
+    // Also re-check when the user comes back to this tab
+    // (e.g. after flipping location on in settings and returning).
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        navigator.geolocation?.getCurrentPosition(
+          (pos) => {
+            setLatitude(pos.coords.latitude)
+            setLongitude(pos.coords.longitude)
+            setLocStatus('ok')
+            lookupAddress(pos.coords.latitude, pos.coords.longitude)
+          },
+          () => {},
+          { enableHighAccuracy: true, timeout: 10000 }
+        )
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      if (permissionStatus) permissionStatus.onchange = null
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
