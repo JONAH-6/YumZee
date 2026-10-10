@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { Link, navigate, routes } from '@redwoodjs/router'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { generateGroupCode, parseGroupCode } from 'src/lib/groupCodeUtils'
@@ -17,7 +17,7 @@ const BasketPage = () => {
   const [isGroupActive, setIsGroupActive] = useState(false)
   const [inviteCode, setInviteCode] = useState('')
   const [isPlacingOrder, setIsPlacingOrder] = useState(false)
-  const [latitude, setLatitude] = useState(6.5244) // Default: Lagos
+  const [latitude, setLatitude] = useState(6.5244)
   const [longitude, setLongitude] = useState(3.3792)
   const [locStatus, setLocStatus] = useState<'idle' | 'locating' | 'ok' | 'denied'>('idle')
   const [address, setAddress] = useState<AddressDetails>({ ...EMPTY_ADDRESS })
@@ -27,31 +27,38 @@ const BasketPage = () => {
   const [houseNumber, setHouseNumber] = useState('')
   const [junction, setJunction] = useState('')
 
-  // Keep the edit fields in sync while the map auto-detects
+  // Sync edit fields whenever address auto-updates
   useEffect(() => {
     if (!isEditingAddress) {
       setEditedAddress({ ...address })
     }
   }, [address, isEditingAddress])
 
-  const lookupAddress = async (lat: number, lng: number) => {
+  // Stable reference — won't change between renders
+  const lookupAddress = useCallback(async (lat: number, lng: number) => {
     setLookingUp(true)
     const found = await reverseGeocode(lat, lng)
     setAddress(found)
     setLookingUp(false)
-  }
+  }, [])
 
-  // Simple location request — the BROWSER shows its own permission popup.
-  // Used both automatically on page open and on button tap.
-  const requestLocation = () => {
+  // THE LOCATION FUNCTION — stable ref, safety timer, no custom alerts
+  const requestLocation = useCallback(() => {
     if (!('geolocation' in navigator)) {
       setLocStatus('denied')
       return
     }
 
     setLocStatus('locating')
+
+    // If the browser NEVER responds (common on mobile), unlock after 10s
+    const safetyTimer = setTimeout(() => {
+      setLocStatus((prev) => (prev === 'locating' ? 'idle' : prev))
+    }, 10000)
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        clearTimeout(safetyTimer)
         const lat = pos.coords.latitude
         const lng = pos.coords.longitude
         setLatitude(lat)
@@ -60,24 +67,24 @@ const BasketPage = () => {
         lookupAddress(lat, lng)
       },
       () => {
+        clearTimeout(safetyTimer)
         setLocStatus('denied')
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+      { enableHighAccuracy: true, timeout: 8000, maximumAge: 0 }
     )
-  }
+  }, [lookupAddress])
 
-  // Auto call on page open — browser pops the permission request itself.
+  // Auto-fire on page load + listen for permission changes (no refresh needed)
   useEffect(() => {
     requestLocation()
 
-    // If the user turns location on later (phone settings / site settings),
-    // detect it and fetch WITHOUT needing a refresh.
-    let permissionStatus: PermissionStatus | null = null
+    let permStatus: PermissionStatus | null = null
     if ('permissions' in navigator) {
       navigator.permissions
         .query({ name: 'geolocation' as PermissionName })
         .then((status) => {
-          permissionStatus = status
+          permStatus = status
+          // User enables location in phone settings → auto-detect immediately
           status.onchange = () => {
             if (status.state === 'granted') {
               requestLocation()
@@ -87,30 +94,19 @@ const BasketPage = () => {
         .catch(() => {})
     }
 
-    // Also re-check when the user comes back to this tab
-    // (e.g. after flipping location on in settings and returning).
+    // User comes back to the tab after changing phone settings → re-check
     const handleVisibility = () => {
       if (document.visibilityState === 'visible') {
-        navigator.geolocation?.getCurrentPosition(
-          (pos) => {
-            setLatitude(pos.coords.latitude)
-            setLongitude(pos.coords.longitude)
-            setLocStatus('ok')
-            lookupAddress(pos.coords.latitude, pos.coords.longitude)
-          },
-          () => {},
-          { enableHighAccuracy: true, timeout: 10000 }
-        )
+        requestLocation()
       }
     }
     document.addEventListener('visibilitychange', handleVisibility)
 
     return () => {
-      if (permissionStatus) permissionStatus.onchange = null
+      if (permStatus) permStatus.onchange = null
       document.removeEventListener('visibilitychange', handleVisibility)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [requestLocation])
 
   const deliveryFee = isGroupActive ? 140 : 500
   const total = totalPrice + deliveryFee
@@ -122,8 +118,7 @@ const BasketPage = () => {
 
   const saveEditedAddress = () => {
     const combined = [
-      editedAddress.street +
-        (editedAddress.houseNumber ? `, ${editedAddress.houseNumber}` : ''),
+      editedAddress.street + (editedAddress.houseNumber ? `, ${editedAddress.houseNumber}` : ''),
       editedAddress.area,
       editedAddress.city,
       editedAddress.state,
@@ -164,8 +159,7 @@ const BasketPage = () => {
     if (cart.length === 0) return
 
     const finalHouseNumber = houseNumber.trim() || address.houseNumber
-    const finalStreet =
-      address.street + (finalHouseNumber ? `, ${finalHouseNumber}` : '')
+    const finalStreet = address.street + (finalHouseNumber ? `, ${finalHouseNumber}` : '')
     const finalAddress = [
       finalStreet,
       junction.trim() ? `near ${junction.trim()}` : '',
@@ -195,6 +189,7 @@ const BasketPage = () => {
 
   return (
     <div className="mx-auto min-h-screen max-w-md bg-[#FFF9E5] font-sans text-[#211F26] pb-40">
+      {/* Header */}
       <div className="sticky top-0 z-10 flex items-center gap-4 border-b border-[#E9E5EE] bg-white p-4">
         <Link to={routes.home()} className="rounded-full p-1 hover:bg-gray-100">
           <ChevronLeft className="h-6 w-6 text-[#211F26]" />
@@ -203,11 +198,17 @@ const BasketPage = () => {
       </div>
 
       <div className="p-4">
+        {/* Cart Items */}
         <div className="space-y-3">
           {cart.length === 0 ? (
             <div className="anim-pop-in rounded-2xl bg-white p-6 text-center">
               <p className="text-sm text-[#6F6B76]">Your basket is empty.</p>
-              <Link to={routes.home()} className="mt-4 inline-block rounded-full bg-[#FFC107] px-6 py-2 text-sm font-bold text-black transition hover:bg-[#e6ad00] active:scale-95">Browse Snacks</Link>
+              <Link
+                to={routes.home()}
+                className="mt-4 inline-block rounded-full bg-[#FFC107] px-6 py-2 text-sm font-bold text-black transition hover:bg-[#e6ad00] active:scale-95"
+              >
+                Browse Snacks
+              </Link>
             </div>
           ) : (
             cart.map((item, index) => (
@@ -216,19 +217,45 @@ const BasketPage = () => {
                 className="anim-fade-up flex items-center gap-3 rounded-2xl bg-white p-4 transition-all duration-200 hover:-translate-y-0.5"
                 style={{ animationDelay: `${Math.min(index * 70, 420)}ms` }}
               >
-                <img src={item.image} alt={item.name} className="h-24 w-24 rounded-xl object-contain bg-[#FFC107]" />
+                <img
+                  src={item.image}
+                  alt={item.name}
+                  className="h-24 w-24 rounded-xl object-contain bg-[#FFC107]"
+                />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold truncate">#{item.id} {item.name}</h3>
+                  <h3 className="text-sm font-bold truncate">
+                    #{item.id} {item.name}
+                  </h3>
                   <p className="text-[11px] text-[#6F6B76] mt-0.5">Qty {item.quantity}</p>
-                  <p className="mt-1 text-sm font-bold text-[#3E2679]">₦{(item.price * item.quantity).toLocaleString()}</p>
+                  <p className="mt-1 text-sm font-bold text-[#3E2679]">
+                    ₦{(item.price * item.quantity).toLocaleString()}
+                  </p>
                 </div>
                 <div className="flex flex-col items-end gap-2">
                   <div className="flex items-center gap-1">
-                    <button onClick={() => updateQuantity(item.id, -1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold transition active:scale-90">−</button>
-                    <span key={item.quantity} className="anim-pop-in inline-block w-6 text-center text-sm font-bold">{item.quantity}</span>
-                    <button onClick={() => updateQuantity(item.id, 1)} className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold transition active:scale-90">+</button>
+                    <button
+                      onClick={() => updateQuantity(item.id, -1)}
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold transition active:scale-90"
+                    >
+                      −
+                    </button>
+                    <span
+                      key={item.quantity}
+                      className="anim-pop-in inline-block w-6 text-center text-sm font-bold"
+                    >
+                      {item.quantity}
+                    </span>
+                    <button
+                      onClick={() => updateQuantity(item.id, 1)}
+                      className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E9E5EE] bg-[#FAF8FD] text-sm font-bold transition active:scale-90"
+                    >
+                      +
+                    </button>
                   </div>
-                  <button onClick={() => removeFromCart(item.id)} className="rounded-md p-1 text-[#A09BA8] transition hover:scale-110 hover:text-red-500 active:scale-90">
+                  <button
+                    onClick={() => removeFromCart(item.id)}
+                    className="rounded-md p-1 text-[#A09BA8] transition hover:scale-110 hover:text-red-500 active:scale-90"
+                  >
                     <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
@@ -237,31 +264,56 @@ const BasketPage = () => {
           )}
         </div>
 
+        {/* Group Order */}
         {cart.length > 0 && (
-          <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4" style={{ animationDelay: '0.25s' }}>
+          <div
+            className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4"
+            style={{ animationDelay: '0.25s' }}
+          >
             {isGroupActive ? (
               <div className="text-center">
-                <span className="text-sm font-bold text-[#3E2679]">Group Order Active (30% Delivery Discount)</span>
+                <span className="text-sm font-bold text-[#3E2679]">
+                  Group Order Active (30% Delivery Discount)
+                </span>
                 <div className="mt-2 bg-[#F5F1FB] p-3 rounded-lg text-xs text-[#4B2E83] break-all">
                   <span className="font-bold">Invite Code:</span> {inviteCode}
-                  <button onClick={() => navigator.clipboard.writeText(inviteCode)} className="ml-2 bg-[#FFC928] px-2 py-1 rounded text-black font-bold">Copy</button>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(inviteCode)}
+                    className="ml-2 bg-[#FFC928] px-2 py-1 rounded text-black font-bold"
+                  >
+                    Copy
+                  </button>
                 </div>
               </div>
             ) : (
-              <button onClick={() => setIsGroupModalOpen(true)} className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#3E2679] py-3 text-sm font-bold text-[#3E2679]">
+              <button
+                onClick={() => setIsGroupModalOpen(true)}
+                className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#3E2679] py-3 text-sm font-bold text-[#3E2679]"
+              >
                 <Users className="h-4 w-4" /> Save on Delivery with a Group Order
               </button>
             )}
           </div>
         )}
 
+        {/* Delivery Location */}
         {cart.length > 0 && (
-          <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4" style={{ animationDelay: '0.3s' }}>
+          <div
+            className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4"
+            style={{ animationDelay: '0.3s' }}
+          >
             <div className="mb-2 flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-wider text-[#6F6B76]">Delivery Location</p>
-              {locStatus === 'ok' && <span className="text-[11px] font-bold text-green-600">Location set</span>}
-              {locStatus === 'locating' && <span className="text-[11px] font-bold text-amber-600">Locating...</span>}
+              <p className="text-xs font-bold uppercase tracking-wider text-[#6F6B76]">
+                Delivery Location
+              </p>
+              {locStatus === 'ok' && (
+                <span className="text-[11px] font-bold text-green-600">Location set ✓</span>
+              )}
+              {locStatus === 'locating' && (
+                <span className="text-[11px] font-bold text-amber-600">Detecting...</span>
+              )}
             </div>
+
             <DeliveryMap
               latitude={latitude}
               longitude={longitude}
@@ -278,6 +330,8 @@ const BasketPage = () => {
                   : 'Your delivery point'
               }
             />
+
+            {/* Address display / edit */}
             <div className="relative mt-2 rounded-xl bg-[#F5F1FB] p-3 text-sm">
               {!isEditingAddress && (
                 <button
@@ -289,6 +343,7 @@ const BasketPage = () => {
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
               )}
+
               {isEditingAddress ? (
                 <div className="space-y-2">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-[#3E2679]">
@@ -297,35 +352,45 @@ const BasketPage = () => {
                   <input
                     type="text"
                     value={editedAddress.street}
-                    onChange={(e) => setEditedAddress({ ...editedAddress, street: e.target.value })}
+                    onChange={(e) =>
+                      setEditedAddress({ ...editedAddress, street: e.target.value })
+                    }
                     placeholder="Street name"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
                     type="text"
                     value={editedAddress.houseNumber}
-                    onChange={(e) => setEditedAddress({ ...editedAddress, houseNumber: e.target.value })}
+                    onChange={(e) =>
+                      setEditedAddress({ ...editedAddress, houseNumber: e.target.value })
+                    }
                     placeholder="House / Flat number (e.g. 15)"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
                     type="text"
                     value={editedAddress.area}
-                    onChange={(e) => setEditedAddress({ ...editedAddress, area: e.target.value })}
+                    onChange={(e) =>
+                      setEditedAddress({ ...editedAddress, area: e.target.value })
+                    }
                     placeholder="Area / Neighbourhood"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
                     type="text"
                     value={editedAddress.city}
-                    onChange={(e) => setEditedAddress({ ...editedAddress, city: e.target.value })}
+                    onChange={(e) =>
+                      setEditedAddress({ ...editedAddress, city: e.target.value })
+                    }
                     placeholder="City"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
                     type="text"
                     value={editedAddress.state}
-                    onChange={(e) => setEditedAddress({ ...editedAddress, state: e.target.value })}
+                    onChange={(e) =>
+                      setEditedAddress({ ...editedAddress, state: e.target.value })
+                    }
                     placeholder="State"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
@@ -357,9 +422,7 @@ const BasketPage = () => {
                     </p>
                   )}
                   <p className="text-[#6F6B76]">
-                    {[address.area, address.city, address.state]
-                      .filter(Boolean)
-                      .join(', ')}
+                    {[address.area, address.city, address.state].filter(Boolean).join(', ')}
                   </p>
                 </div>
               ) : (
@@ -369,12 +432,11 @@ const BasketPage = () => {
               )}
             </div>
 
-            {/* 🔥 BUTTON — browser shows its own permission popup */}
+            {/* ✅ LOCATION BUTTON — NO disabled EVER */}
             <button
               type="button"
               onClick={requestLocation}
-              disabled={locStatus === 'locating'}
-              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white transition active:scale-95 disabled:opacity-50"
+              className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white transition active:scale-95"
             >
               <MapPin className="h-4 w-4" />
               {locStatus === 'locating'
@@ -386,9 +448,15 @@ const BasketPage = () => {
           </div>
         )}
 
+        {/* Delivery Details */}
         {cart.length > 0 && (
-          <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4" style={{ animationDelay: '0.33s' }}>
-            <p className="mb-3 text-base font-black text-[#211F26]">Confirm your delivery details</p>
+          <div
+            className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4"
+            style={{ animationDelay: '0.33s' }}
+          >
+            <p className="mb-3 text-base font-black text-[#211F26]">
+              Confirm your delivery details
+            </p>
             <div className="space-y-3">
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#6F6B76]">
@@ -436,14 +504,21 @@ const BasketPage = () => {
           </div>
         )}
 
+        {/* Order Summary */}
         {cart.length > 0 && (
-          <div className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5" style={{ animationDelay: '0.35s' }}>
+          <div
+            className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-5"
+            style={{ animationDelay: '0.35s' }}
+          >
             <div className="flex justify-between text-sm mb-2">
               <span className="text-[#6F6B76]">Basket Subtotal</span>
               <span className="font-bold">₦{totalPrice.toLocaleString()}</span>
             </div>
             <div className="flex justify-between text-sm mb-4">
-              <span className="text-[#6F6B76]">Rider Delivery {isGroupActive && <span className="text-green-600">(Discounted)</span>}</span>
+              <span className="text-[#6F6B76]">
+                Rider Delivery{' '}
+                {isGroupActive && <span className="text-green-600">(Discounted)</span>}
+              </span>
               <span className="font-bold">₦{deliveryFee.toLocaleString()}</span>
             </div>
             <div className="flex justify-between border-t border-[#E9E5EE] pt-4">
@@ -453,31 +528,67 @@ const BasketPage = () => {
           </div>
         )}
 
+        {/* Place Order */}
         {cart.length > 0 && (
           <div className="fixed bottom-16 left-0 right-0 z-30 flex justify-center">
-            <div className="anim-fade-up w-full max-w-md bg-gradient-to-t from-[#FFF9E5] via-[#FFF9E5]/95 to-transparent px-4 pb-3 pt-6" style={{ animationDelay: '0.45s' }}>
-              <button onClick={handlePlaceOrder} disabled={isPlacingOrder || !houseNumber.trim()} className="w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black transition hover:bg-[#e6ad00] active:scale-[0.98] disabled:opacity-50">
-                {isPlacingOrder ? 'Placing Order...' : !houseNumber.trim() ? 'Add House Number to Continue' : 'Place Order'}
+            <div
+              className="anim-fade-up w-full max-w-md bg-gradient-to-t from-[#FFF9E5] via-[#FFF9E5]/95 to-transparent px-4 pb-3 pt-6"
+              style={{ animationDelay: '0.45s' }}
+            >
+              <button
+                onClick={handlePlaceOrder}
+                disabled={isPlacingOrder || !houseNumber.trim()}
+                className="w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black transition hover:bg-[#e6ad00] active:scale-[0.98] disabled:opacity-50"
+              >
+                {isPlacingOrder
+                  ? 'Placing Order...'
+                  : !houseNumber.trim()
+                  ? 'Add House Number to Continue'
+                  : 'Place Order'}
               </button>
             </div>
           </div>
         )}
       </div>
 
+      {/* Group Order Modal */}
       {isGroupModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="anim-pop-in relative w-full max-w-sm rounded-2xl bg-white p-6">
-            <button onClick={() => setIsGroupModalOpen(false)} className="absolute right-3 top-3 text-gray-500"><X className="h-5 w-5" /></button>
+            <button
+              onClick={() => setIsGroupModalOpen(false)}
+              className="absolute right-3 top-3 text-gray-500"
+            >
+              <X className="h-5 w-5" />
+            </button>
             <h2 className="text-lg font-bold text-[#211F26] mb-4">Group Order</h2>
             <div className="space-y-4">
               <div className="flex flex-col gap-2">
-                <button onClick={handleStartGroup} className="w-full rounded-xl bg-[#3E2679] py-3 text-sm font-bold text-white">Start Group Order (Invite)</button>
-                <p className="text-center text-xs text-[#6F6B76]">I am the Host. I will share my code.</p>
+                <button
+                  onClick={handleStartGroup}
+                  className="w-full rounded-xl bg-[#3E2679] py-3 text-sm font-bold text-white"
+                >
+                  Start Group Order (Invite)
+                </button>
+                <p className="text-center text-xs text-[#6F6B76]">
+                  I am the Host. I will share my code.
+                </p>
               </div>
               <div className="border-t border-[#E9E5EE] pt-4">
                 <p className="text-xs font-bold text-[#6F6B76] mb-2">JOIN A GROUP</p>
-                <input type="text" placeholder="e.g., 1×3,5×2" value={groupCodeInput} onChange={(e) => setGroupCodeInput(e.target.value)} className="w-full rounded-lg border border-[#E9E5EE] bg-[#FAF8FD] p-3 text-sm outline-none focus:border-[#3E2679]" />
-                <button onClick={handleJoinGroup} className="mt-2 w-full rounded-xl bg-[#FFC107] py-3 text-sm font-bold text-black">Join Group</button>
+                <input
+                  type="text"
+                  placeholder="e.g., 1×3,5×2"
+                  value={groupCodeInput}
+                  onChange={(e) => setGroupCodeInput(e.target.value)}
+                  className="w-full rounded-lg border border-[#E9E5EE] bg-[#FAF8FD] p-3 text-sm outline-none focus:border-[#3E2679]"
+                />
+                <button
+                  onClick={handleJoinGroup}
+                  className="mt-2 w-full rounded-xl bg-[#FFC107] py-3 text-sm font-bold text-black"
+                >
+                  Join Group
+                </button>
               </div>
             </div>
           </div>
