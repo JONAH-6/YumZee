@@ -27,14 +27,11 @@ const BasketPage = () => {
   const [houseNumber, setHouseNumber] = useState('')
   const [junction, setJunction] = useState('')
 
-  // Sync edit fields whenever address auto-updates
   useEffect(() => {
-    if (!isEditingAddress) {
-      setEditedAddress({ ...address })
-    }
+    if (!isEditingAddress) setEditedAddress({ ...address })
   }, [address, isEditingAddress])
 
-  // Stable reference — won't change between renders
+  // Stable reference — never recreated
   const lookupAddress = useCallback(async (lat: number, lng: number) => {
     setLookingUp(true)
     const found = await reverseGeocode(lat, lng)
@@ -42,7 +39,9 @@ const BasketPage = () => {
     setLookingUp(false)
   }, [])
 
-  // THE LOCATION FUNCTION — stable ref, safety timer, no custom alerts
+  // THE LOCATION FUNCTION
+  // - Has a 10s safety timer so locStatus can NEVER be stuck on 'locating' forever
+  // - No custom alerts — browser handles the native popup itself
   const requestLocation = useCallback(() => {
     if (!('geolocation' in navigator)) {
       setLocStatus('denied')
@@ -51,7 +50,7 @@ const BasketPage = () => {
 
     setLocStatus('locating')
 
-    // If the browser NEVER responds (common on mobile), unlock after 10s
+    // If browser never responds (common on mobile without gesture), unlock after 10s
     const safetyTimer = setTimeout(() => {
       setLocStatus((prev) => (prev === 'locating' ? 'idle' : prev))
     }, 10000)
@@ -74,34 +73,68 @@ const BasketPage = () => {
     )
   }, [lookupAddress])
 
-  // Auto-fire on page load + listen for permission changes (no refresh needed)
   useEffect(() => {
-    requestLocation()
+    if (!('geolocation' in navigator)) {
+      setLocStatus('denied')
+      return
+    }
 
     let permStatus: PermissionStatus | null = null
+
     if ('permissions' in navigator) {
       navigator.permissions
         .query({ name: 'geolocation' as PermissionName })
         .then((status) => {
           permStatus = status
-          // User enables location in phone settings → auto-detect immediately
+
+          // ✅ Auto-fetch ONLY when permission is already granted
+          //    (safe without user gesture)
+          if (status.state === 'granted') {
+            requestLocation()
+          }
+          // ⚠️  If 'prompt': DO NOT auto-call — on mobile the browser will
+          //    silently hang without a user tap. Wait for button click instead.
+          // ❌  If 'denied': just set status and let user tap button to retry
+
+          if (status.state === 'denied') {
+            setLocStatus('denied')
+          }
+
+          // When user enables location later (no refresh needed)
           status.onchange = () => {
             if (status.state === 'granted') {
               requestLocation()
+            } else if (status.state === 'denied') {
+              setLocStatus('denied')
             }
           }
         })
-        .catch(() => {})
+        .catch(() => {
+          // Permissions API not supported (iOS Safari) → just try
+          requestLocation()
+        })
+    } else {
+      // Very old browser — just try
+      requestLocation()
     }
 
-    // User comes back to the tab after changing phone settings → re-check
+    // When user comes back to the tab after enabling location in phone Settings
     const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
+      if (document.visibilityState !== 'visible') return
+
+      if ('permissions' in navigator) {
+        navigator.permissions
+          .query({ name: 'geolocation' as PermissionName })
+          .then((status) => {
+            if (status.state === 'granted') requestLocation()
+          })
+          .catch(() => requestLocation())
+      } else {
         requestLocation()
       }
     }
-    document.addEventListener('visibilitychange', handleVisibility)
 
+    document.addEventListener('visibilitychange', handleVisibility)
     return () => {
       if (permStatus) permStatus.onchange = null
       document.removeEventListener('visibilitychange', handleVisibility)
@@ -157,7 +190,6 @@ const BasketPage = () => {
 
   const handlePlaceOrder = () => {
     if (cart.length === 0) return
-
     const finalHouseNumber = houseNumber.trim() || address.houseNumber
     const finalStreet = address.street + (finalHouseNumber ? `, ${finalHouseNumber}` : '')
     const finalAddress = [
@@ -169,7 +201,6 @@ const BasketPage = () => {
     ]
       .filter(Boolean)
       .join(', ')
-
     sessionStorage.setItem(
       'yumzee_checkout',
       JSON.stringify({
@@ -223,9 +254,7 @@ const BasketPage = () => {
                   className="h-24 w-24 rounded-xl object-contain bg-[#FFC107]"
                 />
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-bold truncate">
-                    #{item.id} {item.name}
-                  </h3>
+                  <h3 className="text-sm font-bold truncate">#{item.id} {item.name}</h3>
                   <p className="text-[11px] text-[#6F6B76] mt-0.5">Qty {item.quantity}</p>
                   <p className="mt-1 text-sm font-bold text-[#3E2679]">
                     ₦{(item.price * item.quantity).toLocaleString()}
@@ -239,10 +268,7 @@ const BasketPage = () => {
                     >
                       −
                     </button>
-                    <span
-                      key={item.quantity}
-                      className="anim-pop-in inline-block w-6 text-center text-sm font-bold"
-                    >
+                    <span key={item.quantity} className="anim-pop-in inline-block w-6 text-center text-sm font-bold">
                       {item.quantity}
                     </span>
                     <button
@@ -352,45 +378,35 @@ const BasketPage = () => {
                   <input
                     type="text"
                     value={editedAddress.street}
-                    onChange={(e) =>
-                      setEditedAddress({ ...editedAddress, street: e.target.value })
-                    }
+                    onChange={(e) => setEditedAddress({ ...editedAddress, street: e.target.value })}
                     placeholder="Street name"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
                     type="text"
                     value={editedAddress.houseNumber}
-                    onChange={(e) =>
-                      setEditedAddress({ ...editedAddress, houseNumber: e.target.value })
-                    }
+                    onChange={(e) => setEditedAddress({ ...editedAddress, houseNumber: e.target.value })}
                     placeholder="House / Flat number (e.g. 15)"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
                     type="text"
                     value={editedAddress.area}
-                    onChange={(e) =>
-                      setEditedAddress({ ...editedAddress, area: e.target.value })
-                    }
+                    onChange={(e) => setEditedAddress({ ...editedAddress, area: e.target.value })}
                     placeholder="Area / Neighbourhood"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
                     type="text"
                     value={editedAddress.city}
-                    onChange={(e) =>
-                      setEditedAddress({ ...editedAddress, city: e.target.value })
-                    }
+                    onChange={(e) => setEditedAddress({ ...editedAddress, city: e.target.value })}
                     placeholder="City"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
                   <input
                     type="text"
                     value={editedAddress.state}
-                    onChange={(e) =>
-                      setEditedAddress({ ...editedAddress, state: e.target.value })
-                    }
+                    onChange={(e) => setEditedAddress({ ...editedAddress, state: e.target.value })}
                     placeholder="State"
                     className="w-full rounded-lg border border-[#E9E5EE] bg-white px-3 py-2 text-sm outline-none focus:border-[#3E2679]"
                   />
@@ -427,12 +443,12 @@ const BasketPage = () => {
                 </div>
               ) : (
                 <p className="pr-8 text-[#6F6B76]">
-                  Tap the map or use your current location to detect your address.
+                  Tap the map or tap the button below to detect your location.
                 </p>
               )}
             </div>
 
-            {/* ✅ LOCATION BUTTON — NO disabled EVER */}
+            {/* ✅ BUTTON — NEVER disabled, always tappable */}
             <button
               type="button"
               onClick={requestLocation}
@@ -454,9 +470,7 @@ const BasketPage = () => {
             className="anim-fade-up mt-4 rounded-2xl border border-[#E9E5EE] bg-white p-4"
             style={{ animationDelay: '0.33s' }}
           >
-            <p className="mb-3 text-base font-black text-[#211F26]">
-              Confirm your delivery details
-            </p>
+            <p className="mb-3 text-base font-black text-[#211F26]">Confirm your delivery details</p>
             <div className="space-y-3">
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-[#6F6B76]">
