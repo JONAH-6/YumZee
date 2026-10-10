@@ -81,6 +81,40 @@ const BasketPage = () => {
     )
   }
 
+  // Auto call on page open (browser pops its own permission request) +
+  // re-detect without refresh if the user flips location on later.
+  useEffect(() => {
+    requestLocation()
+
+    let permissionStatus: PermissionStatus | null = null
+    if ('permissions' in navigator) {
+      navigator.permissions
+        .query({ name: 'geolocation' as PermissionName })
+        .then((status) => {
+          permissionStatus = status
+          status.onchange = () => {
+            if (status.state === 'granted') {
+              requestLocation()
+            }
+          }
+        })
+        .catch(() => {})
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        requestLocation()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      if (permissionStatus) permissionStatus.onchange = null
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   const deliveryFee = isGroupActive ? 140 : 500
   const total = totalPrice + deliveryFee
 
