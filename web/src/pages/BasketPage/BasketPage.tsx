@@ -41,9 +41,31 @@ const BasketPage = () => {
     setLookingUp(false)
   }
 
-  // Ask for location permission when checkout opens
+  // Silent auto-try on page open (no popups, no alerts).
+  // Works instantly if permission was granted before; otherwise stays quiet
+  // and waits for the user to tap the button (which triggers the popup).
+  const autoRequestLocation = () => {
+    setLocStatus('locating')
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = pos.coords.latitude
+        const lng = pos.coords.longitude
+        setLatitude(lat)
+        setLongitude(lng)
+        setLocStatus('ok')
+        lookupAddress(lat, lng)
+      },
+      () => {
+        setLocStatus('idle')
+      },
+      { enableHighAccuracy: true, timeout: 8000 }
+    )
+  }
+
+  // Button tap: user gesture, so the browser shows the permission popup.
   const requestLocation = () => {
     if (!('geolocation' in navigator)) {
+      alert('Your browser does not support location. Please tap the map to place your pin.')
       setLocStatus('denied')
       return
     }
@@ -57,13 +79,44 @@ const BasketPage = () => {
         setLocStatus('ok')
         lookupAddress(lat, lng)
       },
-      () => setLocStatus('denied'),
-      { enableHighAccuracy: true, timeout: 10000 }
+      (error) => {
+        console.error('Geolocation error:', error)
+        setLocStatus('denied')
+        if (error.code === 1) {
+          alert(
+            'Location was blocked. Tap the lock icon in your browser address bar, set Location to Allow, refresh the page — or tap the map to place your pin manually.'
+          )
+        } else {
+          alert('Could not get your location. Please tap the map to place your pin.')
+        }
+      },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
     )
   }
 
   useEffect(() => {
-    requestLocation()
+    if (!('geolocation' in navigator)) {
+      setLocStatus('denied')
+      return
+    }
+    // Only auto-try when permission is already granted; otherwise the
+    // browser silently ignores it and we wait for the button tap.
+    if ('permissions' in navigator) {
+      navigator.permissions
+        .query({ name: 'geolocation' as PermissionName })
+        .then((result) => {
+          if (result.state === 'granted') {
+            autoRequestLocation()
+          } else if (result.state === 'denied') {
+            setLocStatus('denied')
+          }
+        })
+        .catch(() => {
+          autoRequestLocation()
+        })
+    } else {
+      autoRequestLocation()
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
