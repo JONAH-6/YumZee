@@ -41,15 +41,29 @@ const BasketPage = () => {
     setLookingUp(false)
   }
 
-  // Ask for location permission when checkout opens
+  // 🔥 Location only fires when the user clicks the button
   const requestLocation = () => {
     if (!('geolocation' in navigator)) {
       setLocStatus('denied')
       return
     }
+
     setLocStatus('locating')
+    let resolved = false
+
+    // Safety timer: if the browser never responds in 12s, unlock the button
+    const safetyTimer = setTimeout(() => {
+      if (!resolved) {
+        resolved = true
+        setLocStatus('idle')
+      }
+    }, 12000)
+
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        if (resolved) return
+        resolved = true
+        clearTimeout(safetyTimer)
         const lat = pos.coords.latitude
         const lng = pos.coords.longitude
         setLatitude(lat)
@@ -57,15 +71,15 @@ const BasketPage = () => {
         setLocStatus('ok')
         lookupAddress(lat, lng)
       },
-      () => setLocStatus('denied'),
-      { enableHighAccuracy: true, timeout: 10000 }
+      () => {
+        if (resolved) return
+        resolved = true
+        clearTimeout(safetyTimer)
+        setLocStatus('denied')
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     )
   }
-
-  useEffect(() => {
-    requestLocation()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
 
   const deliveryFee = isGroupActive ? 140 : 500
   const total = totalPrice + deliveryFee
@@ -118,11 +132,9 @@ const BasketPage = () => {
   }
 
   // Basket only collects the order — Checkout takes payment, then saves it.
-  // Snapshot passed same-tab via sessionStorage (order itself still lives in Firestore).
   const handlePlaceOrder = () => {
     if (cart.length === 0) return
 
-    // Final Glovo-style address: "Street, Number, near Junction, Area, City, State"
     const finalHouseNumber = houseNumber.trim() || address.houseNumber
     const finalStreet =
       address.street + (finalHouseNumber ? `, ${finalHouseNumber}` : '')
@@ -220,6 +232,7 @@ const BasketPage = () => {
             <div className="mb-2 flex items-center justify-between">
               <p className="text-xs font-bold uppercase tracking-wider text-[#6F6B76]">Delivery Location</p>
               {locStatus === 'ok' && <span className="text-[11px] font-bold text-green-600">Location set</span>}
+              {locStatus === 'locating' && <span className="text-[11px] font-bold text-amber-600">Locating...</span>}
             </div>
             <DeliveryMap
               latitude={latitude}
@@ -237,7 +250,6 @@ const BasketPage = () => {
                   : 'Your delivery point'
               }
             />
-            {/* Auto-detected address, Glovo style, with manual edit */}
             <div className="relative mt-2 rounded-xl bg-[#F5F1FB] p-3 text-sm">
               {!isEditingAddress && (
                 <button
@@ -328,12 +340,21 @@ const BasketPage = () => {
                 </p>
               )}
             </div>
-            <button type="button" onClick={requestLocation} disabled={locStatus === 'locating'} className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white disabled:opacity-50">
-              <MapPin className="h-4 w-4" /> {locStatus === 'locating' ? 'Locating...' : locStatus === 'ok' ? 'Use My Current Location Again' : 'Use My Current Location'}
+
+            {/* 🔥 BUTTON — only trigger on click */}
+            <button
+              type="button"
+              onClick={requestLocation}
+              className="mt-2 flex w-full touch-manipulation select-none items-center justify-center gap-2 rounded-xl bg-[#3E2679] py-2.5 text-sm font-bold text-white transition active:scale-95"
+              style={{ WebkitTapHighlightColor: 'transparent' }}
+            >
+              <MapPin className="h-4 w-4" />
+              {locStatus === 'locating'
+                ? 'Getting your location...'
+                : locStatus === 'ok'
+                ? 'Use My Current Location Again'
+                : 'Use My Current Location'}
             </button>
-            {locStatus === 'denied' && (
-              <p className="mt-1 text-[11px] text-red-500">Location blocked turn on your location</p>
-            )}
           </div>
         )}
 
@@ -405,9 +426,9 @@ const BasketPage = () => {
         )}
 
         {cart.length > 0 && (
-          <div className="fixed bottom-16 left-0 right-0 z-30 flex justify-center">
-            <div className="anim-fade-up w-full max-w-md bg-gradient-to-t from-[#FFF9E5] via-[#FFF9E5]/95 to-transparent px-4 pb-3 pt-6" style={{ animationDelay: '0.45s' }}>
-              <button onClick={handlePlaceOrder} disabled={isPlacingOrder || !houseNumber.trim()} className="w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black transition hover:bg-[#e6ad00] active:scale-[0.98] disabled:opacity-50">
+          <div className="pointer-events-none fixed bottom-16 left-0 right-0 z-30 flex justify-center">
+            <div className="anim-fade-up pointer-events-none w-full max-w-md bg-gradient-to-t from-[#FFF9E5] via-[#FFF9E5]/95 to-transparent px-4 pb-3 pt-6" style={{ animationDelay: '0.45s' }}>
+              <button onClick={handlePlaceOrder} disabled={isPlacingOrder || !houseNumber.trim()} className="pointer-events-auto w-full rounded-full bg-[#FFC107] py-5 text-lg font-black text-black transition hover:bg-[#e6ad00] active:scale-[0.98] disabled:opacity-50">
                 {isPlacingOrder ? 'Placing Order...' : !houseNumber.trim() ? 'Add House Number to Continue' : 'Place Order'}
               </button>
             </div>
