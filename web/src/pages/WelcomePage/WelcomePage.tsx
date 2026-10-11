@@ -16,8 +16,8 @@ const SLIDES = [
   },
   {
     image: 'deliverd-to-owner-remove.png',
-    title: 'Delivered in 20 Minutes',
-    subtitle: 'Turn into a happy customer, every time',
+    title: 'Delivered Fast',
+    subtitle: 'Hot and fresh, right when you need it',
   },
 ]
 
@@ -57,10 +57,8 @@ const WelcomePage = () => {
   }
 
   return (
-    // 🔥 Full-screen backdrop (centers the phone frame on desktop)
     <div className="flex h-screen w-full items-center justify-center bg-black">
-
-      {/* 📱 Phone frame — max-w-md */}
+      {/* Phone frame */}
       <div className="relative flex h-full w-full max-w-md flex-col items-center justify-center overflow-hidden bg-[#3E2679] px-6 text-center">
 
         {/* Slide area */}
@@ -69,14 +67,14 @@ const WelcomePage = () => {
           onTouchStart={handleTouchStart}
           onTouchEnd={handleTouchEnd}
         >
-          {/* Images */}
-          <div className="relative h-56 w-full">
+          {/* Images — bigger again */}
+          <div className="relative h-64 w-full">
             {SLIDES.map((slide, i) => (
               <img
                 key={i}
                 src={slide.image}
                 alt={slide.title}
-                className={`absolute inset-0 m-auto h-56 w-56 object-contain transition-all duration-700 ease-out ${
+                className={`absolute inset-0 m-auto h-64 w-64 object-contain transition-all duration-700 ease-out ${
                   i === current
                     ? 'translate-x-0 opacity-100 scale-100'
                     : i < current
@@ -88,7 +86,7 @@ const WelcomePage = () => {
           </div>
 
           {/* Title + Subtitle */}
-          <div className="relative mt-1 h-16 w-full overflow-hidden">
+          <div className="relative mt-2 h-20 w-full overflow-hidden">
             {SLIDES.map((slide, i) => (
               <div
                 key={i}
@@ -100,10 +98,10 @@ const WelcomePage = () => {
                     : 'translate-x-full opacity-0'
                 }`}
               >
-                <h2 className="text-2xl font-black text-[#FFC107] tracking-tight drop-shadow-lg">
+                <h2 className="text-3xl font-black text-[#FFC107] tracking-tight drop-shadow-lg">
                   {slide.title}
                 </h2>
-                <p className="mt-0.5 text-xs font-light text-white/80">
+                <p className="mt-1 text-sm font-light text-white/80">
                   {slide.subtitle}
                 </p>
               </div>
@@ -111,47 +109,47 @@ const WelcomePage = () => {
           </div>
 
           {/* Dots */}
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-4 flex items-center gap-2">
             {SLIDES.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
                 aria-label={`Go to slide ${i + 1}`}
                 className={`rounded-full transition-all duration-300 ${
-                  i === current ? 'h-2 w-6 bg-[#FFC107]' : 'h-2 w-2 bg-white/30'
+                  i === current ? 'h-2 w-7 bg-[#FFC107]' : 'h-2 w-2 bg-white/30'
                 }`}
               />
             ))}
           </div>
 
           {/* Brand */}
-          <h1 className="mt-6 text-4xl font-black tracking-tight drop-shadow-lg">
+          <h1 className="mt-6 text-5xl font-black tracking-tight drop-shadow-lg">
             <span className="text-[#FFC107]">YUM</span>
             <span className="text-white">ZEE</span>
           </h1>
 
-          <p className="mt-1 text-[10px] font-light tracking-widest text-white/60 uppercase">
+          <p className="mt-2 text-xs font-light tracking-widest text-white/60 uppercase">
             Snacks delivered fast
           </p>
 
-          {/* Two small buttons */}
-          <div className="mt-6 flex w-full gap-3">
+          {/* Two buttons — bigger */}
+          <div className="mt-7 flex w-full gap-3">
             <button
               onClick={() => setSheetOpen('login')}
-              className="flex-1 rounded-full border-2 border-white/40 bg-transparent py-3 text-sm font-bold text-white transition active:scale-95"
+              className="flex-1 rounded-full border-2 border-white/50 bg-transparent py-3.5 text-base font-bold text-white transition active:scale-95"
             >
               Log In
             </button>
             <button
               onClick={() => setSheetOpen('signup')}
-              className="flex-1 rounded-full bg-[#FFC107] py-3 text-sm font-bold text-[#3E2679] transition active:scale-95"
+              className="flex-1 rounded-full bg-[#FFC107] py-3.5 text-base font-bold text-[#3E2679] transition active:scale-95"
             >
               Sign Up
             </button>
           </div>
 
           {/* Footer */}
-          <p className="mt-4 text-[10px] tracking-wider text-white/40">
+          <p className="mt-5 text-[10px] tracking-wider text-white/40">
             Powered by Yumzee Logistics{' '}
             <button
               onClick={() => navigate(routes.adminLogin())}
@@ -162,18 +160,18 @@ const WelcomePage = () => {
           </p>
         </div>
 
-        {/* 🔥 BOTTOM SHEET — constrained to phone width */}
+        {/* 🔥 BOTTOM SHEET — fixed to viewport, but width constrained to phone */}
         {sheetOpen && (
           <div
-            className="anim-fade-in absolute inset-0 z-50 bg-black/60"
+            className="anim-fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/60"
             onClick={() => setSheetOpen(null)}
           >
             <div
-              className="anim-slide-up absolute bottom-0 left-0 right-0 rounded-t-3xl bg-white p-6 pb-10 shadow-2xl"
+              className="anim-slide-up w-full max-w-md rounded-t-3xl bg-white p-6 pb-8 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Handle bar */}
-              <div className="mx-auto mb-4 h-1 w-12 rounded-full bg-gray-300" />
+              <div className="mx-auto mb-3 h-1 w-12 rounded-full bg-gray-300" />
 
               {/* Close button */}
               <button
@@ -184,7 +182,7 @@ const WelcomePage = () => {
               </button>
 
               {/* Title */}
-              <h2 className="mt-2 text-center text-2xl font-black text-[#211F26]">
+              <h2 className="mt-1 text-center text-2xl font-black text-[#211F26]">
                 {sheetOpen === 'signup' ? 'Create Account' : 'Welcome Back'}
               </h2>
               <p className="mt-1 text-center text-sm text-[#6F6B76]">
@@ -196,7 +194,7 @@ const WelcomePage = () => {
               {/* Continue with Google */}
               <button
                 onClick={handleGoogleSignIn}
-                className="mt-6 flex w-full items-center justify-center gap-3 rounded-full border-2 border-gray-200 bg-white py-4 text-base font-bold text-gray-800 transition hover:bg-gray-50 active:scale-95"
+                className="mt-5 flex w-full items-center justify-center gap-3 rounded-full border-2 border-gray-200 bg-white py-3.5 text-base font-bold text-gray-800 transition hover:bg-gray-50 active:scale-95"
               >
                 <svg width="22" height="22" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
                   <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
@@ -206,8 +204,6 @@ const WelcomePage = () => {
                 </svg>
                 Continue with Google
               </button>
-
-
             </div>
           </div>
         )}
