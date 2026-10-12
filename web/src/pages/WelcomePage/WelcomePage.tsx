@@ -57,7 +57,7 @@ const WelcomePage = () => {
   }
 
   return (
-    <div className="flex h-screen w-full items-center justify-center bg-black">
+    <div className="flex h-screen w-full items-center justify-center bg-gradient-to-br from-[#1a0f3d] via-[#2a1a55] to-[#3E2679]">
       {/* Phone frame */}
       <div className="relative flex h-full w-full max-w-md flex-col items-center justify-center overflow-hidden bg-[#3E2679] px-6 text-center">
 
