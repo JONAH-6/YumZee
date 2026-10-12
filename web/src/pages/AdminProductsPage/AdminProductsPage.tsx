@@ -108,7 +108,7 @@ const AdminProductsPage = () => {
       <div className="mx-auto max-w-7xl px-6 py-6">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Product List */}
-          <div className="lg:col-span-2 rounded-2xl bg-white p-6 border border-red-100">
+          <div className="order-2 rounded-2xl bg-white p-6 border border-red-100 lg:order-1 lg:col-span-2">
             <h2 className="mb-4 text-xl font-black text-red-600">All Products</h2>
             {products.length === 0 ? (
               <p className="py-8 text-center text-gray-400">No products uploaded yet...</p>
@@ -158,7 +158,7 @@ const AdminProductsPage = () => {
           </div>
 
           {/* Form (Add or Edit) */}
-          <div className="h-fit rounded-2xl bg-red-600 p-6 text-white">
+          <div className="order-1 h-fit rounded-2xl bg-red-600 p-6 text-white lg:order-2">
             <h2 className="mb-4 text-xl font-black">
               {editingId ? 'Edit Product' : 'Upload New Product'}
             </h2>
