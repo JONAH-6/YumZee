@@ -158,7 +158,7 @@ const AdminProductsPage = () => {
           </div>
 
           {/* Form (Add or Edit) */}
-          <div className="rounded-2xl bg-red-600 p-6 text-white">
+          <div className="h-fit rounded-2xl bg-red-600 p-6 text-white">
             <h2 className="mb-4 text-xl font-black">
               {editingId ? 'Edit Product' : 'Upload New Product'}
             </h2>

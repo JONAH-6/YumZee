@@ -32,7 +32,7 @@ const AdminOverviewPage = () => {
 
       <div className="mx-auto max-w-7xl px-6 py-6">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div className="rounded-2xl bg-red-600 p-6 text-white border border-red-100">
+          <div className="h-fit rounded-2xl bg-red-600 p-6 text-white border border-red-100">
             <h3 className="text-lg font-bold">Total Orders</h3>
             <p className="mt-2 text-5xl font-black">{orders.length}</p>
           </div>

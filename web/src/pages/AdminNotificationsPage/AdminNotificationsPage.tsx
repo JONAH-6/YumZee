@@ -122,7 +122,7 @@ const AdminNotificationsPage = () => {
       <div className="mx-auto max-w-7xl px-6 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Form */}
-          <div className="rounded-2xl bg-red-600 p-6 text-white">
+          <div className="h-fit rounded-2xl bg-red-600 p-6 text-white">
             <h2 className="mb-4 flex items-center gap-2 text-xl font-black">
               <Bell className="h-5 w-5" />
               {editingId ? 'Edit Notification' : 'Send Notification'}
