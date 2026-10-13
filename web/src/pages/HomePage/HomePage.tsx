@@ -1,7 +1,7 @@
 // web/src/pages/HomePage/HomePage.tsx
 import React, { useState, useEffect } from 'react'
 import { Link, routes, navigate } from '@redwoodjs/router'
-import { ShoppingBasket, UserCheck, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useCart } from 'src/components/CartContext/CartContext'
 import { useAuth } from 'src/contexts/AuthContexts'
 import { collection, onSnapshot, doc, getDoc } from 'firebase/firestore'
@@ -17,6 +17,13 @@ interface Product {
   description: string
 }
 
+const PROMO_SLIDES = [
+  { image: 'Taste the Joy!.png' },
+
+
+
+]
+
 const HomePage = () => {
   const { addToCart } = useCart()
   const { user } = useAuth()
@@ -24,8 +31,17 @@ const HomePage = () => {
   const [selectedCategory, setSelectedCategory] = useState('All Items')
   const [loading, setLoading] = useState(true)
   const [showProfilePrompt, setShowProfilePrompt] = useState(false)
+  const [promoIndex, setPromoIndex] = useState(0)
 
-  // 🔥 NEW: Check if the user has completed their profile
+  // 🔥 Auto-rotate promo banner every 4 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setPromoIndex((prev) => (prev + 1) % PROMO_SLIDES.length)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // 🔥 Check if the user has completed their profile
   useEffect(() => {
     const checkProfileCompletion = async () => {
       if (!user) return
@@ -34,11 +50,9 @@ const HomePage = () => {
         const docSnap = await getDoc(docRef)
 
         if (!docSnap.exists()) {
-          // Brand new user - no profile document at all
           setShowProfilePrompt(true)
         } else {
           const data = docSnap.data()
-          // If the key delivery fields are missing, they haven't finished
           if (!data.phone || !data.hostel || !data.campus) {
             setShowProfilePrompt(true)
           }
@@ -77,15 +91,15 @@ const HomePage = () => {
   const filteredProducts =
     selectedCategory === 'All Items'
       ? products
-      : products.filter((p) => (p.category || '').trim().toLowerCase() === selectedCategory.toLowerCase())
+      : products.filter(
+          (p) => (p.category || '').trim().toLowerCase() === selectedCategory.toLowerCase()
+        )
 
   const handleGoToProfile = () => {
     setShowProfilePrompt(false)
     navigate(routes.profile())
   }
 
-  // Name for the personal heading: Google first name, else email prefix.
-  // e.g. "Emeka Mazi" -> "Emeka", "maziemeka6@gmail.com" -> "Maziemeka6"
   const userFirstName = (() => {
     const raw =
       user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || ''
@@ -95,111 +109,161 @@ const HomePage = () => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-gradient-to-b from-[#FFF3CF] via-[#FFF9E5] to-[#FDEBC8] p-4 pb-24">
-      {/* Soft ambient wash so the glass has something to blur */}
+      {/* Soft ambient wash */}
       <div className="pointer-events-none absolute -left-20 top-10 h-72 w-72 rounded-full bg-[#FFC107]/25 blur-3xl" />
       <div className="pointer-events-none absolute -right-20 top-1/2 h-80 w-80 rounded-full bg-[#3E2679]/10 blur-3xl" />
+
       <div className="relative">
-      <div className="mb-4 flex gap-6 overflow-x-auto border-b border-[#E9E5EE] scrollbar-hide">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setSelectedCategory(cat)}
-            className={`relative -mb-px whitespace-nowrap border-b-2 pb-2 text-sm font-bold transition-all duration-200 active:scale-95 ${
-              selectedCategory === cat
-                ? 'text-[#3E2679] border-b-2 border-[#3E2679] scale-105'
-                : 'text-[#6F6B76] border-b-2 border-transparent hover:text-[#3E2679]'
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
-      </div>
+              {/* 🔥 PROMO CAROUSEL — IMAGE ONLY */}
+        <div className="anim-fade-up mb-4">
+          <div className="relative w-full aspect-[3/1] overflow-hidden rounded-2xl">
+            {PROMO_SLIDES.map((slide, i) => (
+              <img
+                key={i}
+                src={slide.image}
+                alt="Promo"
+                className={`absolute inset-0 h-full w-full object-cover transition-all duration-700 ease-out ${
+                  i === promoIndex
+                    ? 'translate-x-0 opacity-100'
+                    : i < promoIndex
+                    ? '-translate-x-full opacity-0'
+                    : 'translate-x-full opacity-0'
+                }`}
+              />
+            ))}
 
-      <h2 className="anim-fade-up mb-4 text-lg font-bold text-[#211F26]">{userFirstName}, this is for you</h2>
-
-      {loading ? (
-        <div className="flex flex-col space-y-2">
-          {[0, 1, 2].map((i) => (
-            <div key={i} className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/60 p-2 backdrop-blur-md">
-              <div className="anim-shimmer h-28 w-28 rounded-lg" />
-              <div className="flex-1 space-y-2 py-2">
-                <div className="anim-shimmer h-4 w-2/3 rounded" />
-                <div className="anim-shimmer h-3 w-full rounded" />
-                <div className="anim-shimmer h-4 w-1/3 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col space-y-2">
-          {filteredProducts.length === 0 ? (
-            <div className="border border-white/70 bg-white/60 p-6 text-center backdrop-blur-md">
-              <p className="text-sm text-[#6F6B76]">coming soon</p>
-            </div>
-          ) : (
-            filteredProducts.map((product, index) => (
-              <Link
-                key={product.id}
-                to={routes.productDetail({ id: product.id })}
-                className="anim-fade-up group flex items-center gap-3 rounded-2xl border border-white/70 bg-white/60 p-2 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/80 active:scale-[0.99]"
-                style={{ animationDelay: `${Math.min(index * 70, 560)}ms` }}
-              >
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="h-28 w-28 rounded-lg object-cover bg-[#FFC107] transition-transform duration-300 group-hover:scale-105"
+            {/* Dots */}
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-1.5">
+              {PROMO_SLIDES.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setPromoIndex(i)}
+                  aria-label={`Go to slide ${i + 1}`}
+                  className={`rounded-full transition-all duration-300 ${
+                    i === promoIndex
+                      ? 'h-1.5 w-5 bg-[#FFC107]'
+                      : 'h-1.5 w-1.5 bg-white/50'
+                  }`}
                 />
-                <div className="flex-1">
-                  <h3 className="text-base font-bold text-[#211F26]">{product.name}</h3>
-                  <p className="mt-1 text-xs text-[#6F6B76] line-clamp-2">{product.description}</p>
-                  <p className="mt-2 text-base font-bold text-[#3E2679]">
-                    ₦{product.price.toLocaleString()}
-                  </p>
-                </div>
-              </Link>
-            ))
-          )}
-        </div>
-      )}
-
-           {/* 🔥 NEW USER PROFILE PROMPT POPUP */}
-      {showProfilePrompt && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
-          <div className="anim-pop-in relative w-full max-w-xs rounded-2xl bg-white p-5 text-center">
-            <button
-              onClick={() => setShowProfilePrompt(false)}
-              className="absolute right-3 top-3 rounded-full p-1 text-gray-400 hover:bg-gray-100"
-            >
-              <X className="h-4 w-4" />
-            </button>
-
-            {/* NEW: Material Symbol 'check' icon */}
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFC107]">
-              <span className="material-symbols-outlined text-[#3E2679]" style={{ fontSize: '26px' }}>
-                check
-              </span>
+              ))}
             </div>
-
-            <h2 className="text-base font-black text-[#211F26]">Welcome to YumZee</h2>
-            <p className="mt-1 text-xs text-[#6F6B76]">
-              Add your delivery details to start ordering.
-            </p>
-
-            <button
-              onClick={handleGoToProfile}
-              className="mt-4 w-full rounded-full bg-[#FFC107] py-2.5 text-sm font-black text-black"
-            >
-              Complete Profile
-            </button>
-            <button
-              onClick={() => setShowProfilePrompt(false)}
-              className="mt-2 w-full text-xs font-bold text-[#6F6B76] hover:text-[#3E2679]"
-            >
-              Maybe Later
-            </button>
           </div>
         </div>
-      )}
+        {/* Category tabs */}
+        <div className="mb-4 flex gap-6 overflow-x-auto border-b border-[#E9E5EE] scrollbar-hide">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`relative -mb-px whitespace-nowrap border-b-2 pb-2 text-sm font-bold transition-all duration-200 active:scale-95 ${
+                selectedCategory === cat
+                  ? 'text-[#3E2679] border-b-2 border-[#3E2679] scale-105'
+                  : 'text-[#6F6B76] border-b-2 border-transparent hover:text-[#3E2679]'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        <h2 className="anim-fade-up mb-4 text-lg font-bold text-[#211F26]">
+          {userFirstName}, this is for you
+        </h2>
+
+        {loading ? (
+          <div className="flex flex-col space-y-2">
+            {[0, 1, 2].map((i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/60 p-2 backdrop-blur-md"
+              >
+                <div className="anim-shimmer h-28 w-28 rounded-lg" />
+                <div className="flex-1 space-y-2 py-2">
+                  <div className="anim-shimmer h-4 w-2/3 rounded" />
+                  <div className="anim-shimmer h-3 w-full rounded" />
+                  <div className="anim-shimmer h-4 w-1/3 rounded" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex flex-col space-y-2">
+            {filteredProducts.length === 0 ? (
+              <div className="border border-white/70 bg-white/60 p-6 text-center backdrop-blur-md">
+                <p className="text-sm text-[#6F6B76]">coming soon</p>
+              </div>
+            ) : (
+              filteredProducts.map((product, index) => (
+                <Link
+                  key={product.id}
+                  to={routes.productDetail({ id: product.id })}
+                  className="anim-fade-up group flex items-center gap-3 rounded-2xl border border-white/70 bg-white/60 p-2 backdrop-blur-md transition-all duration-200 hover:-translate-y-0.5 hover:bg-white/80 active:scale-[0.99]"
+                  style={{ animationDelay: `${Math.min(index * 70, 560)}ms` }}
+                >
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="h-28 w-28 rounded-lg bg-[#FFC107] object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                  <div className="flex-1">
+                    <h3 className="text-base font-bold text-[#211F26]">
+                      {product.name}
+                    </h3>
+                    <p className="mt-1 text-xs text-[#6F6B76] line-clamp-2">
+                      {product.description}
+                    </p>
+                    <p className="mt-2 text-base font-bold text-[#3E2679]">
+                      ₦{product.price.toLocaleString()}
+                    </p>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
+        )}
+
+        {/* 🔥 NEW USER PROFILE PROMPT POPUP */}
+        {showProfilePrompt && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 p-4">
+            <div className="anim-pop-in relative w-full max-w-xs rounded-2xl bg-white p-5 text-center">
+              <button
+                onClick={() => setShowProfilePrompt(false)}
+                className="absolute right-3 top-3 rounded-full p-1 text-gray-400 hover:bg-gray-100"
+              >
+                <X className="h-4 w-4" />
+              </button>
+
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#FFC107]">
+                <span
+                  className="material-symbols-outlined text-[#3E2679]"
+                  style={{ fontSize: '26px' }}
+                >
+                  check
+                </span>
+              </div>
+
+              <h2 className="text-base font-black text-[#211F26]">
+                Welcome to YumZee
+              </h2>
+              <p className="mt-1 text-xs text-[#6F6B76]">
+                Add your delivery details to start ordering.
+              </p>
+
+              <button
+                onClick={handleGoToProfile}
+                className="mt-4 w-full rounded-full bg-[#FFC107] py-2.5 text-sm font-black text-black"
+              >
+                Complete Profile
+              </button>
+              <button
+                onClick={() => setShowProfilePrompt(false)}
+                className="mt-2 w-full text-xs font-bold text-[#6F6B76] hover:text-[#3E2679]"
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
