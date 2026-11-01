@@ -18,7 +18,10 @@ interface Product {
 }
 
 const PROMO_SLIDES = [
-  { image: 'Taste the Joy!.png' },
+  { image: ' 1.png' },
+   { image: '2.png' },
+    { image: 'Taste the Joy!.png' },
+     { image: '3.png' },
 
 
 
@@ -116,7 +119,7 @@ const HomePage = () => {
       <div className="relative">
               {/* 🔥 PROMO CAROUSEL — IMAGE ONLY */}
         <div className="anim-fade-up mb-4">
-          <div className="relative w-full aspect-[3/1] overflow-hidden rounded-2xl">
+          <div className="relative h-36 w-full overflow-hidden rounded-2xl sm:h-44 md:h-52">
             {PROMO_SLIDES.map((slide, i) => (
               <img
                 key={i}
