@@ -119,7 +119,7 @@ const HomePage = () => {
       <div className="relative">
               {/* 🔥 PROMO CAROUSEL — IMAGE ONLY */}
         <div className="anim-fade-up mb-4">
-          <div className="relative h-36 w-full overflow-hidden rounded-2xl sm:h-44 md:h-52">
+          <div className="relative aspect-[4/1] max-h-40 w-full overflow-hidden rounded-2xl">
             {PROMO_SLIDES.map((slide, i) => (
               <img
                 key={i}
